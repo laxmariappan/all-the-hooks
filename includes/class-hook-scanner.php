@@ -151,6 +151,8 @@ class HookScanner {
 						'name' => $hook['name'],
 						'type' => $this->determine_hook_type($hook['name']),
 						'file' => $rel_path,
+						'line_number' => isset($hook['line']) ? $hook['line'] : 0,
+						'function_call' => isset($hook['function_call']) ? $hook['function_call'] : '',
 						'docblock' => isset($hook['docblock']) ? $hook['docblock'] : '',
 					];
 					
