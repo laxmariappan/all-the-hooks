@@ -9,8 +9,10 @@
         "phpdocumentor/reflection-docblock": "^5.3"
     },
     "autoload": {
+        "classmap": [
+            "includes/"
+        ],
         "psr-4": {
-            "AllTheHooks\\": "includes/",
             "AllTheHooks\\CLI\\": "includes/cli/"
         },
         "files": [
