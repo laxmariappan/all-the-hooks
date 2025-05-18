@@ -147,7 +147,14 @@ class HookScanner {
 					$rel_path = str_replace( $plugin_directory . '/', '', $file_path );
 					$hook['file'] = $rel_path;
 					
-					$hooks[] = $hook;
+					$hook_data = [
+						'name' => $hook['name'],
+						'type' => $this->determine_hook_type($hook['name']),
+						'file' => $rel_path,
+						'docblock' => $hook['docblock'],
+					];
+					
+					$hooks[] = $hook_data;
 				}
 				
 				// Reset the visitor for the next file
@@ -159,5 +166,22 @@ class HookScanner {
 		}
 		
 		return $hooks;
+	}
+
+	/**
+	 * Determine if a hook is a WordPress core hook or plugin-specific
+	 */
+	private function determine_hook_type($hook_name) {
+		// List of common WordPress hook prefixes
+		$wp_core_prefixes = ['wp_', 'pre_', 'post_', 'after_', 'before_', 'the_', 'admin_'];
+		
+		foreach ($wp_core_prefixes as $prefix) {
+			if (strpos($hook_name, $prefix) === 0) {
+				return 'core hook';
+			}
+		}
+		
+		// You may want to add more sophisticated detection
+		return 'plugin hook';
 	}
 } 

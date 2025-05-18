@@ -9,7 +9,7 @@
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
-	exit;
+    exit;
 }
 
 // Define plugin constants
@@ -49,15 +49,15 @@ add_action( 'admin_menu', 'all_the_hooks_add_admin_menu' );
  * Add a menu page for the plugin.
  */
 function all_the_hooks_add_admin_menu() {
-	add_menu_page(
-		'All The Hooks',
-		'All The Hooks',
-		'manage_options',
+    add_menu_page(
+        'All The Hooks',
+        'All The Hooks',
+        'manage_options',
 		'all-the-hooks',
 		'all_the_hooks_admin_page',
-		'dashicons-editor-code',
-		100
-	);
+        'dashicons-editor-code',
+        100
+    );
 }
 
 /**

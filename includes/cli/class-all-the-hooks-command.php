@@ -154,11 +154,14 @@ class All_The_Hooks_Command {
 			WP_CLI::success( "Found " . count( $hooks ) . " hooks ({$action_count} actions, {$filter_count} filters)." );
 		} else {
 			// Save to file
-			if ( ! preg_match( '/\.' . preg_quote( $ext, '/' ) . '$/i', $output_path ) ) {
-				$output_path .= '.' . $ext;
+			$plugin_slug = basename($plugin_path);
+			$output_file = $plugin_slug . '-hooks.' . $format;
+			
+			if ( ! preg_match( '/\.' . preg_quote( $ext, '/' ) . '$/i', $output_file ) ) {
+				$output_file .= '.' . $ext;
 			}
 			
-			$result = OutputFormatter::save_to_file( $output, $output_path );
+			$result = OutputFormatter::save_to_file( $output, $output_file );
 			
 			if ( is_wp_error( $result ) ) {
 				WP_CLI::error( $result->get_error_message() );
@@ -175,7 +178,7 @@ class All_The_Hooks_Command {
 			} ) );
 			
 			WP_CLI::success( "Found " . count( $hooks ) . " hooks ({$action_count} actions, {$filter_count} filters)." );
-			WP_CLI::log( "Output saved to: {$output_path}" );
+			WP_CLI::log( "Output saved to: {$output_file}" );
 		}
 	}
 } 
