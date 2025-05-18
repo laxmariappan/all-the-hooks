@@ -475,6 +475,60 @@ class OutputFormatter {
 		table.hooks-table th:last-child { width: 60%; }
 		table.hooks-table td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-wrap: break-word; }
 		
+		/* Sticky search bar */
+		.sticky-filters {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			z-index: 100;
+			background-color: var(--bg-color);
+			padding: 15px;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+			display: flex;
+			gap: 15px;
+			flex-wrap: wrap;
+			align-items: center;
+			max-width: 1200px;
+			margin: 0 auto;
+			box-sizing: border-box;
+			border-bottom: 1px solid var(--border-color);
+			transform: translateY(-100%);
+			transition: transform 0.3s ease-in-out;
+		}
+		
+		.sticky-filters.visible {
+			transform: translateY(0);
+		}
+		
+		.sticky-filters input[type="text"] {
+			flex: 1;
+			min-width: 200px;
+		}
+		
+		.filters-placeholder {
+			height: 0;
+			visibility: hidden;
+			transition: height 0.3s ease-in-out;
+		}
+		
+		.filters-placeholder.active {
+			height: 60px;
+			visibility: visible;
+		}
+		
+		@media (max-width: 768px) {
+			.sticky-filters {
+				flex-direction: column;
+				align-items: stretch;
+				padding: 10px;
+			}
+			
+			.filters-placeholder.active {
+				height: 150px;
+			}
+		}
+		
 		/* Parameter table should have auto layout, not affected by main table fixed widths */
 		.param-table {
 			width: 100%;
@@ -567,6 +621,49 @@ class OutputFormatter {
 			font-weight: 600;
 			color: var(--badge-filter-color);
 		}
+		
+		/* Scroll to top button */
+		.scroll-to-top {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			background-color: var(--badge-action-bg);
+			color: var(--badge-action-color);
+			width: 40px;
+			height: 40px;
+			border-radius: 50%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			cursor: pointer;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+			border: none;
+			font-size: 20px;
+			z-index: 100;
+			opacity: 0;
+			transform: translateY(20px);
+			transition: opacity 0.3s, transform 0.3s;
+		}
+		
+		.scroll-to-top.visible {
+			opacity: 1;
+			transform: translateY(0);
+		}
+		
+		.scroll-to-top:hover {
+			background-color: var(--badge-action-color);
+			color: var(--bg-color);
+		}
+		
+		@media (max-width: 768px) {
+			.scroll-to-top {
+				bottom: 15px;
+				right: 15px;
+				width: 35px;
+				height: 35px;
+				font-size: 18px;
+			}
+		}
 	</style>
 </head>
 <body>
@@ -585,6 +682,24 @@ class OutputFormatter {
 			<option value="filter">Filters</option>
 		</select>
 		<select id="core-filter">
+			<option value="all">All Sources</option>
+			<option value="yes">WordPress Core</option>
+			<option value="no">Plugin Specific</option>
+		</select>
+	</div>
+	
+	<!-- Placeholder to prevent content jump when filters become fixed -->
+	<div class="filters-placeholder" id="filters-placeholder"></div>
+	
+	<!-- Sticky version of filters that appears when scrolling -->
+	<div class="sticky-filters" id="sticky-filters">
+		<input type="text" id="sticky-search" placeholder="Search hooks..." autocomplete="off">
+		<select id="sticky-type-filter">
+			<option value="all">All Types</option>
+			<option value="action">Actions</option>
+			<option value="filter">Filters</option>
+		</select>
+		<select id="sticky-core-filter">
 			<option value="all">All Sources</option>
 			<option value="yes">WordPress Core</option>
 			<option value="no">Plugin Specific</option>
@@ -863,7 +978,7 @@ class OutputFormatter {
 			row.classList.remove("showing-context");
 			
 			// Make sure to restore any hidden details cell
-			var detailsCell = row.querySelector("td[data-column=\'Details\']");
+			var detailsCell = row.querySelector("td[data-column=\"Details\"]");
 			if (detailsCell) {
 				detailsCell.style.display = "";
 			}
@@ -874,17 +989,32 @@ class OutputFormatter {
 			row.classList.add("showing-context");
 			
 			// Hide details cell
-			var detailsCell = row.querySelector("td[data-column=\'Details\']");
+			var detailsCell = row.querySelector("td[data-column=\"Details\"]");
 			if (detailsCell) {
 				detailsCell.style.display = "none";
 			}
 		}
 	}
 
+	// Scroll to top function
+	function scrollToTop() {
+		window.scrollTo({
+			top: 0,
+			behavior: "smooth"
+		});
+	}
+
 	document.addEventListener("DOMContentLoaded", function() {
 		const searchInput = document.getElementById("search");
 		const typeFilter = document.getElementById("type-filter");
 		const coreFilter = document.getElementById("core-filter");
+		const stickySearch = document.getElementById("sticky-search");
+		const stickyTypeFilter = document.getElementById("sticky-type-filter");
+		const stickyCoreFilter = document.getElementById("sticky-core-filter");
+		const stickyFilters = document.getElementById("sticky-filters");
+		const filtersPlaceholder = document.getElementById("filters-placeholder");
+		const filtersOriginal = document.querySelector(".filters");
+		const scrollToTopBtn = document.getElementById("scroll-to-top");
 		const table = document.getElementById("hooks-table");
 		const rows = table.querySelectorAll("tbody tr");
 		const noResults = document.getElementById("no-results");
@@ -894,6 +1024,66 @@ class OutputFormatter {
 		const themeIcon = document.getElementById("theme-icon");
 		const themeText = document.getElementById("theme-text");
 		const html = document.documentElement;
+		
+		// Sticky filters handling
+		function handleScroll() {
+			const filtersPosition = filtersOriginal.getBoundingClientRect().top;
+			const scrollThreshold = 0;
+			
+			if (filtersPosition < scrollThreshold) {
+				stickyFilters.classList.add("visible");
+				filtersPlaceholder.classList.add("active");
+			} else {
+				stickyFilters.classList.remove("visible");
+				filtersPlaceholder.classList.remove("active");
+			}
+			
+			// Check scroll position for scroll-to-top button
+			if (window.scrollY > 300) {
+				scrollToTopBtn.classList.add("visible");
+			} else {
+				scrollToTopBtn.classList.remove("visible");
+			}
+		}
+		
+		// Add scroll event listener
+		window.addEventListener("scroll", handleScroll);
+		
+		// Sync between regular and sticky inputs
+		function syncInputs(source, target) {
+			target.value = source.value;
+		}
+		
+		// Sync inputs when changed
+		searchInput.addEventListener("input", function() {
+			syncInputs(searchInput, stickySearch);
+			filterTable();
+		});
+		
+		stickySearch.addEventListener("input", function() {
+			syncInputs(stickySearch, searchInput);
+			filterTable();
+		});
+		
+		typeFilter.addEventListener("change", function() {
+			syncInputs(typeFilter, stickyTypeFilter);
+			filterTable();
+		});
+		
+		stickyTypeFilter.addEventListener("change", function() {
+			syncInputs(stickyTypeFilter, typeFilter);
+			filterTable();
+		});
+		
+		coreFilter.addEventListener("change", function() {
+			syncInputs(coreFilter, stickyCoreFilter);
+			filterTable();
+		});
+		
+		stickyCoreFilter.addEventListener("change", function() {
+			syncInputs(stickyCoreFilter, coreFilter);
+			filterTable();
+		});
 		
 		// Theme toggle functionality
 		function setTheme(theme) {
@@ -963,12 +1153,9 @@ class OutputFormatter {
 			noResults.style.display = visibleCount === 0 ? "block" : "none";
 		}
 		
-		searchInput.addEventListener("input", filterTable);
-		typeFilter.addEventListener("change", filterTable);
-		coreFilter.addEventListener("change", filterTable);
-		
-		// Initial count
+		// Initial count and scroll check
 		filterTable();
+		handleScroll();
 
 		// Handle clicking on related hook links
 		document.querySelectorAll(".related-hook-link").forEach(link => {
@@ -981,8 +1168,14 @@ class OutputFormatter {
 				typeFilter.value = "all";
 				coreFilter.value = "all";
 				
+				// Sync with sticky filters
+				syncInputs(searchInput, stickySearch);
+				syncInputs(typeFilter, stickyTypeFilter);
+				syncInputs(coreFilter, stickyCoreFilter);
+				
 				// Filter to just this hook
 				searchInput.value = hookName;
+				syncInputs(searchInput, stickySearch);
 				filterTable();
 				
 				// Scroll to the hook
@@ -998,6 +1191,8 @@ class OutputFormatter {
 		});
 	});
 	</script>
+	
+	<button id="scroll-to-top" class="scroll-to-top" onclick="scrollToTop()">↑</button>
 </body>
 </html>';
 
