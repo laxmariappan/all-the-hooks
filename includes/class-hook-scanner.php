@@ -145,11 +145,14 @@ class HookScanner {
 					
 					// Calculate relative path from plugin directory
 					$rel_path = str_replace( $plugin_directory . '/', '', $file_path );
-					$hook['file'] = $rel_path;
+					
+					// Determine if it's a core hook
+					$is_core = $this->is_core_hook($hook['name']);
 					
 					$hook_data = [
 						'name' => $hook['name'],
-						'type' => $this->determine_hook_type($hook['name']),
+						'type' => $hook['type'], // This should be 'action' or 'filter' from HookVisitor
+						'is_core' => $is_core ? 'yes' : 'no',
 						'file' => $rel_path,
 						'line_number' => isset($hook['line']) ? $hook['line'] : 0,
 						'function_call' => isset($hook['function_call']) ? $hook['function_call'] : '',
@@ -185,5 +188,24 @@ class HookScanner {
 		
 		// You may want to add more sophisticated detection
 		return 'plugin hook';
+	}
+
+	/**
+	 * Check if a hook is a core hook
+	 *
+	 * @param string $hook_name The hook name to check.
+	 * @return bool True if the hook is a core hook, false otherwise.
+	 */
+	private function is_core_hook($hook_name) {
+		// List of common WordPress hook prefixes
+		$wp_core_prefixes = ['wp_', 'pre_', 'post_', 'after_', 'before_', 'the_', 'admin_'];
+		
+		foreach ($wp_core_prefixes as $prefix) {
+			if (strpos($hook_name, $prefix) === 0) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 } 
