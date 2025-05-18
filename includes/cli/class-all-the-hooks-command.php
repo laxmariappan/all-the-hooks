@@ -42,12 +42,13 @@ class All_The_Hooks_Command {
 	 * : The slug of the plugin to scan.
 	 *
 	 * [--format=<format>]
-	 * : Output format (json or markdown).
+	 * : Output format (json, markdown, or html).
 	 * ---
 	 * default: json
 	 * options:
 	 *   - json
 	 *   - markdown
+	 *   - html
 	 * ---
 	 *
 	 * [--include_docblocks=<include>]
@@ -99,8 +100,8 @@ class All_The_Hooks_Command {
 		}
 		
 		// Validate format
-		if ( ! in_array( $format, array( 'json', 'markdown' ), true ) ) {
-			WP_CLI::error( 'Invalid format. Use --format=json or --format=markdown.' );
+		if ( ! in_array( $format, array( 'json', 'markdown', 'html' ), true ) ) {
+			WP_CLI::error( 'Invalid format. Use --format=json, --format=markdown, or --format=html.' );
 			return;
 		}
 		
@@ -132,9 +133,12 @@ class All_The_Hooks_Command {
 		if ( 'json' === $format ) {
 			$output = OutputFormatter::to_json( $hooks, $plugin_slug );
 			$ext = 'json';
-		} else {
+		} elseif ( 'markdown' === $format ) {
 			$output = OutputFormatter::to_markdown( $hooks, $plugin_slug );
 			$ext = 'md';
+		} else {
+			$output = OutputFormatter::to_html( $hooks, $plugin_slug );
+			$ext = 'html';
 		}
 		
 		// Determine output destination
