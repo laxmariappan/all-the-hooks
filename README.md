@@ -122,13 +122,13 @@ This document lists all hooks (actions and filters) found in the plugin-slug plu
 - **Line:** 123
 - **Function:** `add_action`
 - **DocBlock:**
-```php
+
 /**
  * Description of the hook.
  *
  * @param string $param1 Description of param1.
  */
-```
+
 - **Summary:** Description of the hook.
 - **Parameters:**
   - `$param1` (string): Description of param1.
@@ -136,7 +136,20 @@ This document lists all hooks (actions and filters) found in the plugin-slug plu
 ## Filters
 
 ### `filter_hook_name`
-...
+
+- **File:** `path/to/file.php`
+- **Line:** 123
+- **Function:** `apply_filters`
+- **DocBlock:**
+
+/**
+ * Description of the hook.
+ *
+ * @param string $param1 Description of param1.
+ */
+- **Summary:** Description of the hook.
+- **Parameters:**
+  - `$param1` (string): Description of param1.
 ```
 
 ### HTML
