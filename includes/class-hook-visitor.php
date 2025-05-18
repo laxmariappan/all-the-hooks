@@ -57,63 +57,41 @@ class HookVisitor extends NodeVisitorAbstract {
 	 * @return void
 	 */
 	public function enterNode( Node $node ) {
-		// Check if this is a function call
-		if ( ! $node instanceof Node\Expr\FuncCall ) {
-			return;
-		}
-		
-		// Check if the name is available and a string
-		if ( ! $node->name instanceof Node\Name ) {
-			return;
-		}
-		
-		$function_name = $node->name->toString();
-		
-		// Skip if not a WordPress hook function
-		if ( ! in_array( $function_name, array( 'add_action', 'add_filter', 'do_action', 'do_action_ref_array', 'apply_filters', 'apply_filters_ref_array' ), true ) ) {
-			return;
-		}
-
-		// Get the first argument (hook name)
-		if ( ! isset( $node->args[0] ) || empty( $node->args[0]->value ) ) {
-			return;
-		}
-		
-		// Get hook name from first argument
-		$hook_name = $this->extract_hook_name( $node->args[0]->value );
-		
-		if ( empty( $hook_name ) ) {
-			return;
-		}
-		
-		// Determine hook type
-		$type = 'action';
-		if ( in_array( $function_name, array( 'add_filter', 'apply_filters', 'apply_filters_ref_array' ), true ) ) {
-			$type = 'filter';
-		}
-
-		// Build hook data
-		$hook_data = array(
-			'name'           => $hook_name,
-			'type'           => $type,
-			'line_number'    => $node->getLine(),
-			'function_call'  => $function_name,
-		);
-		
-		// Add DocBlock if enabled
-		if ( $this->include_docblocks ) {
-			$docblock_raw = $this->get_docblock( $node );
+		if ( $node instanceof Node\Expr\FuncCall && $node->name instanceof Node\Name ) {
+			$function_name = $node->name->toString();
 			
-			if ( $docblock_raw ) {
-				$hook_data['docblock_raw'] = $docblock_raw;
-				$hook_data['docblock_parsed'] = $this->parse_docblock( $docblock_raw );
-			} else {
-				$hook_data['docblock_raw'] = null;
-				$hook_data['docblock_parsed'] = null;
+			// Check if this is a hook registration function
+			if ( in_array( $function_name, array( 'add_action', 'add_filter', 'apply_filters', 'do_action', 'do_action_ref_array', 'apply_filters_ref_array' ), true ) ) {
+				// Need at least one argument (the hook name)
+				if ( ! isset( $node->args[0] ) ) {
+					return null;
+				}
+
+				// Get the hook name from the first argument
+				$hook_name = $this->getHookName( $node->args[0]->value );
+				if ( ! $hook_name ) {
+					return null;
+				}
+
+				// Determine if it's an action or filter
+				$type = $this->getHookType( $function_name );
+				
+				// Get the docblock if requested
+				$docblock = '';
+				if ( $this->include_docblocks ) {
+					$docblock = $this->getDocComment( $node );
+				}
+
+				// Store the hook with its line number and function call
+				$this->hooks[] = array(
+					'name'           => $hook_name,
+					'type'           => $type,
+					'line'           => $node->getLine(),
+					'function_call'  => $function_name,
+					'docblock'       => $docblock,
+				);
 			}
 		}
-		
-		$this->hooks[] = $hook_data;
 	}
 
 	/**
@@ -122,15 +100,26 @@ class HookVisitor extends NodeVisitorAbstract {
 	 * @param Node $value Node value to extract hook name from.
 	 * @return string|null Hook name or null if not a string.
 	 */
-	private function extract_hook_name( $value ) {
+	private function getHookName( Node $value ) {
 		if ( $value instanceof Node\Scalar\String_ ) {
 			return $value->value;
 		}
-		
-		// For now, only support simple string literals
-		// Future improvement: handle concatenated strings, variables, etc.
-		
+		// Add other cases for dynamic hook names if needed
 		return null;
+	}
+
+	/**
+	 * Determine hook type based on function name.
+	 *
+	 * @param string $function_name Function name to determine hook type for.
+	 * @return string Hook type ('action' or 'filter').
+	 */
+	private function getHookType( $function_name ) {
+		if ( in_array( $function_name, array( 'add_action', 'do_action', 'do_action_ref_array' ), true ) ) {
+			return 'action';
+		} else {
+			return 'filter';
+		}
 	}
 
 	/**
@@ -139,63 +128,8 @@ class HookVisitor extends NodeVisitorAbstract {
 	 * @param Node $node Node to get DocBlock for.
 	 * @return string|null DocBlock comment or null if not found.
 	 */
-	private function get_docblock( Node $node ) {
-		$comments = $node->getAttributes()['comments'] ?? null;
-		
-		if ( ! $comments ) {
-			return null;
-		}
-		
-		// Find the closest DocBlock comment
-		$docblock = null;
-		foreach ( array_reverse( $comments ) as $comment ) {
-			if ( $comment instanceof Doc ) {
-				$docblock = $comment->getText();
-				break;
-			}
-		}
-		
-		return $docblock;
-	}
-
-	/**
-	 * Parse a DocBlock comment into structured data.
-	 *
-	 * @param string $docblock_raw Raw DocBlock comment.
-	 * @return array|null Structured DocBlock data or null on error.
-	 */
-	private function parse_docblock( $docblock_raw ) {
-		try {
-			$docblock = $this->docblock_factory->create( $docblock_raw );
-			
-			$params = array();
-			foreach ( $docblock->getTagsByName( 'param' ) as $param ) {
-				$params[] = array(
-					'name'        => '$' . $param->getVariableName(),
-					'type'        => (string) $param->getType(),
-					'description' => (string) $param->getDescription(),
-				);
-			}
-			
-			$return = null;
-			$return_tags = $docblock->getTagsByName( 'return' );
-			if ( ! empty( $return_tags ) ) {
-				$return_tag = reset( $return_tags );
-				$return = array(
-					'type'        => (string) $return_tag->getType(),
-					'description' => (string) $return_tag->getDescription(),
-				);
-			}
-			
-			return array(
-				'summary'     => $docblock->getSummary(),
-				'description' => (string) $docblock->getDescription(),
-				'params'      => $params,
-				'return'      => $return,
-			);
-		} catch ( \Exception $e ) {
-			return null;
-		}
+	private function getDocComment( Node $node ) {
+		return $node->getDocComment() ? $node->getDocComment()->getText() : '';
 	}
 
 	/**
