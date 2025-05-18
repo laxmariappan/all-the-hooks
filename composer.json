@@ -1,0 +1,20 @@
+{
+    "name": "laxmariappan/all-the-hooks",
+    "description": "WordPress plugin to discover and document hooks in plugins and themes",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=7.2",
+        "nikic/php-parser": "^4.15",
+        "phpdocumentor/reflection-docblock": "^5.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "AllTheHooks\\": "includes/",
+            "AllTheHooks\\CLI\\": "includes/cli/"
+        },
+        "files": [
+            "includes/cli/class-all-the-hooks-command.php"
+        ]
+    }
+} 

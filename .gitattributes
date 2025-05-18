@@ -1,0 +1,14 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Exclude these files from the archive/export
+.gitattributes export-ignore
+.gitignore export-ignore
+.github export-ignore
+README.md export-ignore
+composer.json export-ignore
+
+# Exclude dev files from the archive/export (if you add any in the future)
+tests export-ignore
+phpunit.xml export-ignore
+phpcs.xml export-ignore 

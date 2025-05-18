@@ -1,138 +1,76 @@
 <?php
 /**
- * Plugin Name: AllTheHooks
- * Description: Lists all available action and filter hooks in WordPress.
+ * Plugin Name: All The Hooks
+ * Description: WordPress plugin to discover and document hooks in plugins and themes
  * Version: 1.0.0
- * Author: Your Name
- * License: GPL2
+ * Author: Lax Mariappan
+ * License: GPL-2.0-or-later
  */
 
 // Exit if accessed directly
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-// Add admin menu
-add_action('admin_menu', 'allthehooks_add_admin_menu');
+// Define plugin constants
+define( 'ALL_THE_HOOKS_VERSION', '1.0.0' );
+define( 'ALL_THE_HOOKS_FILE', __FILE__ );
+define( 'ALL_THE_HOOKS_PATH', plugin_dir_path( ALL_THE_HOOKS_FILE ) );
+define( 'ALL_THE_HOOKS_URL', plugin_dir_url( ALL_THE_HOOKS_FILE ) );
+
+// Load Composer autoloader
+if ( file_exists( ALL_THE_HOOKS_PATH . 'vendor/autoload.php' ) ) {
+	require_once ALL_THE_HOOKS_PATH . 'vendor/autoload.php';
+} else {
+	// Display admin notice if Composer dependencies are missing
+	add_action( 'admin_notices', 'all_the_hooks_missing_composer_dependencies' );
+	return;
+}
+
+/**
+ * Display admin notice for missing Composer dependencies
+ */
+function all_the_hooks_missing_composer_dependencies() {
+	?>
+	<div class="notice notice-error">
+		<p>
+			<?php esc_html_e( 'All The Hooks plugin requires Composer dependencies to be installed. Please run "composer install" in the plugin directory.', 'all-the-hooks' ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+// WP-CLI command is autoloaded from includes/cli/class-all-the-hooks-command.php through Composer
+
+// Admin menu for the plugin (future GUI implementation)
+add_action( 'admin_menu', 'all_the_hooks_add_admin_menu' );
 
 /**
  * Add a menu page for the plugin.
  */
-function allthehooks_add_admin_menu() {
-    add_menu_page(
-        'All The Hooks',
-        'All The Hooks',
-        'manage_options',
-        'allthehooks',
-        'allthehooks_admin_page',
-        'dashicons-editor-code',
-        100
-    );
+function all_the_hooks_add_admin_menu() {
+	add_menu_page(
+		'All The Hooks',
+		'All The Hooks',
+		'manage_options',
+		'all-the-hooks',
+		'all_the_hooks_admin_page',
+		'dashicons-editor-code',
+		100
+	);
 }
-
-/**
- * Enqueue admin scripts and styles.
- */
-function allthehooks_enqueue_admin_scripts() {
-    echo '<style>
-        .allthehooks-search {
-            margin-bottom: 20px;
-        }
-        .allthehooks-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .allthehooks-list li {
-            padding: 5px 0;
-            border-bottom: 1px solid #ddd;
-        }
-    </style>';
-    echo '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var searchInput = document.getElementById("allthehooks-search");
-            searchInput.addEventListener("keyup", function() {
-                var filter = searchInput.value.toLowerCase();
-                var listItems = document.querySelectorAll(".allthehooks-list li");
-                listItems.forEach(function(item) {
-                    if (item.textContent.toLowerCase().includes(filter)) {
-                        item.style.display = "";
-                    } else {
-                        item.style.display = "none";
-                    }
-                });
-            });
-        });
-    </script>';
-}
-add_action('admin_head', 'allthehooks_enqueue_admin_scripts');
 
 /**
  * Display the admin page content.
  */
-function allthehooks_admin_page() {
-    echo '<div class="wrap">';
-    echo '<h1>All The Hooks</h1>';
-    echo '<input type="text" id="allthehooks-search" class="allthehooks-search" placeholder="Search hooks...">';
-    
-    $hooks = allthehooks_scan_hooks();
-    
-    // Display action hooks
-    echo '<h2>Action Hooks</h2>';
-    if (!empty($hooks['actions'])) {
-        echo '<ul class="allthehooks-list">';
-        foreach ($hooks['actions'] as $action) {
-            echo '<li>' . esc_html($action) . '</li>';
-        }
-        echo '</ul>';
-    } else {
-        echo '<p>No action hooks found.</p>';
-    }
-    
-    // Display filter hooks
-    echo '<h2>Filter Hooks</h2>';
-    if (!empty($hooks['filters'])) {
-        echo '<ul class="allthehooks-list">';
-        foreach ($hooks['filters'] as $filter) {
-            echo '<li>' . esc_html($filter['hook']) . ' - ' . esc_html($filter['file']) . ' (Line ' . esc_html($filter['line']) . ')</li>';
-        }
-        echo '</ul>';
-    } else {
-        echo '<p>No filter hooks found.</p>';
-    }
-    
-    echo '</div>';
+function all_the_hooks_admin_page() {
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'All The Hooks', 'all-the-hooks' ); ?></h1>
+		<p><?php esc_html_e( 'This plugin is primarily designed to be used with WP-CLI.', 'all-the-hooks' ); ?></p>
+		<h2><?php esc_html_e( 'Usage', 'all-the-hooks' ); ?></h2>
+		<pre>wp all-the-hooks scan --plugin=&lt;plugin-slug&gt; [--format=&lt;json|markdown&gt;] [--include_docblocks=&lt;true|false&gt;] [--output_path=&lt;path&gt;] [--hook_type=&lt;all|action|filter&gt;]</pre>
+		<p><?php esc_html_e( 'For complete documentation, please refer to the README.md file.', 'all-the-hooks' ); ?></p>
+	</div>
+	<?php
 }
-
-/**
- * Scan WordPress files for action and filter hooks, including file names and line numbers for filters.
- *
- * @return array List of hooks found.
- */
-function allthehooks_scan_hooks() {
-    $hooks = [
-        'actions' => [],
-        'filters' => []
-    ];
-    $wp_files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(ABSPATH));
-
-    foreach ($wp_files as $file) {
-        if ($file->isFile() && $file->getExtension() === 'php') {
-            $content = file($file->getRealPath());
-            foreach ($content as $line_number => $line_content) {
-                if (preg_match('/do_action\(\s*[\"\"](.*?)[\"\"]/s', $line_content, $action_matches)) {
-                    $hooks['actions'][] = $action_matches[1];
-                }
-                if (preg_match('/apply_filters\(\s*[\"\"](.*?)[\"\"]/s', $line_content, $filter_matches)) {
-                    $hooks['filters'][] = [
-                        'hook' => $filter_matches[1],
-                        'file' => $file->getRealPath(),
-                        'line' => $line_number + 1
-                    ];
-                }
-            }
-        }
-    }
-
-    return $hooks;
-}
-?> 
