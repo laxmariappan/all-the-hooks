@@ -157,6 +157,10 @@ class OutputFormatter {
 			--badge-core-color: #099268;
 			--badge-plugin-bg: #fff9db;
 			--badge-plugin-color: #e67700;
+			--highlight-bg: #e3f2fd;
+			--highlight-text: #0d47a1;
+			--row-highlight-bg: rgba(227, 242, 253, 0.6);
+			--section-bg: #f9f9f9;
 		}
 		
 		:root[data-theme="dark"] {
@@ -174,6 +178,10 @@ class OutputFormatter {
 			--badge-core-color: #94e2d5;
 			--badge-plugin-bg: #4e411b;
 			--badge-plugin-color: #f9e2af;
+			--highlight-bg: #2d4f3a;
+			--highlight-text: #a6e3a1;
+			--row-highlight-bg: rgba(45, 79, 58, 0.4);
+			--section-bg: #20203b;
 		}
 		
 		body { 
@@ -204,7 +212,7 @@ class OutputFormatter {
 			color: var(--text-color);
 		}
 		.stats { margin-bottom: 20px; font-size: 0.9em; color: var(--text-color); opacity: 0.7; }
-		.top-bar { display: flex; justify-content: space-between; align-items: center; }
+		.top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
 		.theme-toggle {
 			background: none;
 			border: 1px solid var(--border-color);
@@ -220,9 +228,11 @@ class OutputFormatter {
 		.theme-toggle:hover {
 			background-color: var(--hover-color);
 		}
-		table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+		table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
 		th { background: var(--header-bg); padding: 10px; text-align: left; border-bottom: 2px solid var(--border-color); }
-		td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+		th:first-child { width: 40%; }
+		th:last-child { width: 60%; }
+		td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-wrap: break-word; }
 		tr:hover { background-color: var(--hover-color); }
 		.hook-name { font-weight: bold; font-family: monospace; }
 		.badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; margin-right: 5px; }
@@ -230,9 +240,333 @@ class OutputFormatter {
 		.filter { background-color: var(--badge-filter-bg); color: var(--badge-filter-color); }
 		.core { background-color: var(--badge-core-bg); color: var(--badge-core-color); }
 		.plugin { background-color: var(--badge-plugin-bg); color: var(--badge-plugin-color); }
-		.hook-meta { color: var(--text-color); opacity: 0.8; font-size: 0.85em; margin-top: 5px; }
-		.docblock { background: var(--docblock-bg); padding: 10px; margin-top: 5px; white-space: pre-wrap; font-size: 0.9em; border-radius: 4px; }
+		.hook-meta { 
+			color: var(--text-color); 
+			font-size: 0.9em; 
+			margin: 10px 0; 
+			padding: 10px;
+			background-color: var(--bg-color);
+			border: 1px solid var(--border-color);
+			border-radius: 4px;
+		}
+		.hook-meta strong {
+			display: inline-block;
+			width: 80px;
+		}
+		.docblock { 
+			background: var(--docblock-bg); 
+			padding: 15px; 
+			margin-top: 15px; 
+			font-size: 0.9em; 
+			border-radius: 4px;
+			line-height: 1.6;
+		}
+		.docblock-param {
+			margin: 8px 0;
+			padding-left: 15px;
+		}
+		.docblock-param-name {
+			font-family: monospace;
+			font-weight: bold;
+		}
 		.no-results { padding: 20px; text-align: center; color: var(--text-color); opacity: 0.7; }
+		.context-code {
+			background-color: var(--docblock-bg);
+			padding: 10px;
+			border-radius: 4px;
+			font-family: monospace;
+			white-space: pre;
+			margin-top: 10px;
+			display: none;
+			overflow-x: auto;
+			max-width: 100%;
+			line-height: 1.5;
+			grid-column: 1 / -1;
+			width: 100%;
+		}
+		.context-line {
+			display: block;
+			padding: 1px 0;
+		}
+		.context-line-highlight {
+			background-color: var(--highlight-bg);
+			color: var(--highlight-text);
+			display: block;
+		}
+		.view-context-btn {
+			background-color: #4CAF50;
+			color: white;
+			border: none;
+			padding: 5px 10px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 12px;
+			margin: 5px 0;
+			cursor: pointer;
+			border-radius: 3px;
+		}
+		.related-hooks {
+			margin-top: 15px;
+			padding: 15px;
+			border-radius: 4px;
+			background-color: var(--section-bg);
+			border: 1px solid var(--border-color);
+		}
+		.related-hooks h4 {
+			margin: 0 0 12px 0;
+			font-size: 1em;
+			color: var(--text-color);
+			border-bottom: 1px solid var(--border-color);
+			padding-bottom: 5px;
+		}
+		.related-hooks-list {
+			margin: 0;
+			padding: 0;
+			list-style: none;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+		}
+		.related-hooks-list li {
+			margin-bottom: 8px;
+			font-size: 0.9em;
+			background: var(--bg-color);
+			padding: 5px 8px;
+			border-radius: 4px;
+			border: 1px solid var(--border-color);
+			flex: 1 0 calc(50% - 10px);
+			min-width: 200px;
+			box-sizing: border-box;
+		}
+		.related-hook-link {
+			text-decoration: none;
+			color: var(--text-color);
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+		.related-hook-link:hover .related-hook-name {
+			text-decoration: underline;
+		}
+		.badge.small {
+			font-size: 0.7em;
+			padding: 1px 4px;
+			margin-right: 0;
+		}
+		.relationship-type {
+			margin-top: 4px;
+			display: block;
+			opacity: 0.7;
+			font-size: 0.85em;
+			font-style: italic;
+		}
+		.highlight-row {
+			animation: highlight-animation 2s ease-out;
+		}
+		@keyframes highlight-animation {
+			0% { background-color: var(--row-highlight-bg); }
+			100% { background-color: transparent; }
+		}
+		/* Responsive adjustments */
+		@media (max-width: 1024px) {
+			body {
+				padding: 15px;
+			}
+			.filters {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			input[type="text"] {
+				width: 100%;
+				box-sizing: border-box;
+			}
+			.hook-meta strong {
+				width: 70px;
+			}
+			table {
+				display: block;
+			}
+			th:first-child, th:last-child {
+				width: auto;
+			}
+		}
+		@media (max-width: 768px) {
+			h1 {
+				font-size: 1.5em;
+			}
+			.top-bar {
+				flex-direction: column;
+				align-items: flex-start;
+				gap: 10px;
+			}
+			.theme-toggle {
+				align-self: flex-end;
+			}
+			table, thead, tbody, th, td, tr {
+				display: block;
+			}
+			thead tr {
+				position: absolute;
+				top: -9999px;
+				left: -9999px;
+			}
+			tr {
+				margin-bottom: 15px;
+				border: 1px solid var(--border-color);
+				border-radius: 4px;
+			}
+			td {
+				border: none;
+				border-bottom: 1px solid var(--border-color);
+				position: relative;
+				padding-left: 10px;
+			}
+			td:last-child {
+				border-bottom: 0;
+			}
+			td:before {
+				content: attr(data-column);
+				font-weight: bold;
+				margin-right: 10px;
+			}
+			.related-hooks-list li {
+				flex: 1 0 100%;
+			}
+		}
+		.view-details-btn {
+			background-color: #007bff;
+			color: white;
+			border: none;
+			padding: 5px 10px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 12px;
+			margin: 5px 0;
+			cursor: pointer;
+			border-radius: 3px;
+		}
+		.view-details-btn:hover {
+			background-color: #0056b3;
+		}
+		/* Add styles for when context is shown - the row will use CSS grid */
+		tr.showing-context {
+			display: grid !important;
+			grid-template-columns: 1fr;
+			width: 100%;
+		}
+		
+		tr.showing-context > td:first-child {
+			grid-column: 1;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		
+		/* Hide all other columns when context is shown */
+		tr.showing-context > td:not(:first-child) {
+			display: none;
+		}
+		
+		/* Main table layout */
+		table.hooks-table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+		table.hooks-table th { background: var(--header-bg); padding: 10px; text-align: left; border-bottom: 2px solid var(--border-color); }
+		table.hooks-table th:first-child { width: 40%; }
+		table.hooks-table th:last-child { width: 60%; }
+		table.hooks-table td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-wrap: break-word; }
+		
+		/* Parameter table should have auto layout, not affected by main table fixed widths */
+		.param-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 15px 0;
+			font-size: 0.9em;
+			border-radius: 4px;
+			overflow: hidden;
+			table-layout: auto;
+		}
+		
+		.param-table th {
+			background-color: var(--header-bg);
+			padding: 8px 12px;
+			text-align: left;
+			font-weight: bold;
+			color: var(--text-color);
+			border-bottom: 1px solid var(--border-color);
+			width: auto !important; /* Override any width constraints */
+		}
+		
+		.param-table th:first-child {
+			width: auto !important;
+		}
+		
+		.param-table th:last-child {
+			width: auto !important;
+		}
+		
+		.param-table td {
+			padding: 8px 12px;
+			border-bottom: 1px solid var(--border-color);
+			vertical-align: top;
+		}
+		
+		.param-table tr:last-child td {
+			border-bottom: none;
+		}
+		
+		.param-name {
+			font-family: monospace;
+			font-weight: 600;
+			white-space: nowrap;
+		}
+		
+		.param-type {
+			color: var(--badge-filter-color);
+			font-size: 0.9em;
+			white-space: nowrap;
+		}
+		
+		.param-description {
+			line-height: 1.5;
+		}
+		
+		.param-optional {
+			opacity: 0.6;
+			font-style: italic;
+			font-size: 0.85em;
+			margin-left: 5px;
+		}
+		
+		.docblock-section {
+			margin: 15px 0;
+			padding-bottom: 10px;
+			border-bottom: 1px solid var(--border-color);
+		}
+		
+		.docblock-section:last-child {
+			border-bottom: none;
+			padding-bottom: 0;
+		}
+		
+		.docblock-section-title {
+			font-weight: bold;
+			margin-bottom: 8px;
+			color: var(--text-color);
+		}
+		
+		.return-value {
+			margin-top: 8px;
+			padding: 8px 12px;
+			background-color: var(--section-bg);
+			border-radius: 4px;
+			border-left: 3px solid var(--badge-filter-color);
+		}
+		
+		.return-type {
+			font-family: monospace;
+			font-weight: 600;
+			color: var(--badge-filter-color);
+		}
 	</style>
 </head>
 <body>
@@ -261,7 +595,7 @@ class OutputFormatter {
 		<span id="shown-count">0</span> of <span id="total-count">' . count( $hooks ) . '</span> hooks shown
 	</div>
 	
-	<table id="hooks-table">
+	<table id="hooks-table" class="hooks-table">
 		<thead>
 			<tr>
 				<th>Hook</th>
@@ -274,24 +608,237 @@ class OutputFormatter {
 		$hook_type_class = $hook['type'] === 'action' ? 'action' : 'filter';
 		$hook_source_class = $hook['is_core'] === 'yes' ? 'core' : 'plugin';
 		
-		$html .= '<tr data-name="' . esc_attr( $hook['name'] ) . '" data-type="' . esc_attr( $hook['type'] ) . '" data-core="' . esc_attr( $hook['is_core'] ) . '">
-			<td>
+		$html .= '<tr data-name="' . esc_attr( $hook['name'] ) . '" data-type="' . esc_attr( $hook['type'] ) . '" data-core="' . esc_attr( $hook['is_core'] ) . '" class="hook-row">
+			<td data-column="Hook">
 				<div class="hook-name">' . esc_html( $hook['name'] ) . '</div>
 				<div>
 					<span class="badge ' . $hook_type_class . '">' . esc_html( $hook['type'] ) . '</span>
 					<span class="badge ' . $hook_source_class . '">' . ($hook['is_core'] === 'yes' ? 'Core' : 'Plugin') . '</span>
-				</div>
-			</td>
-			<td>
+				</div>';
+				
+		if ( isset( $hook['context'] ) && ! empty( $hook['context'] ) ) {
+			$html .= '<button class="view-context-btn" onclick="toggleContext(this)">View Source Context</button>';
+			$html .= '<div class="context-code">';
+			
+			foreach ( $hook['context'] as $index => $line ) {
+				$line_number = $hook['context_start'] + $index;
+				$is_hook_line = ( $line_number == $hook['line_number'] );
+				$html .= '<div class="' . ($is_hook_line ? 'context-line-highlight' : 'context-line') . '">';
+				$html .= $line_number . ': ' . htmlspecialchars($line) . '</div>';
+			}
+			
+			$html .= '</div>';
+		}
+				
+		$html .= '</td>
+			<td data-column="Details">
 				<div class="hook-meta">
-					<strong>File:</strong> ' . esc_html( $hook['file'] ) . ' (line ' . intval( $hook['line_number'] ) . ')<br>
-					<strong>Function:</strong> ' . esc_html( $hook['function_call'] ) . '
+					<div><strong>File:</strong> ' . esc_html( $hook['file'] ) . '</div>
+					<div><strong>Line:</strong> ' . intval( $hook['line_number'] ) . '</div>
+					<div><strong>Function:</strong> ' . esc_html( $hook['function_call'] ) . '</div>
 				</div>';
 				
 		if ( !empty( $hook['docblock'] ) ) {
-			$html .= '<div class="docblock">' . esc_html( $hook['docblock'] ) . '</div>';
-		}
+			// Format the docblock for better readability
+			$docblock = $hook['docblock'];
+			
+			// Initialize arrays to store different parts of the docblock
+			$description_lines = [];
+			$param_lines = [];
+			$return_line = '';
+			$since_line = '';
+			$see_lines = [];
+			$other_lines = [];
+			
+			// Parse the docblock
+			$lines = explode("\n", $docblock);
+			$current_section = 'description';
+			
+			foreach ($lines as $line) {
+				$line = trim($line);
+				// Skip empty lines and comment markers
+				if (empty($line) || $line === '/**' || $line === '*/') {
+					continue;
+				}
 				
+				// Remove leading asterisk if present
+				if (substr($line, 0, 1) === '*') {
+					$line = trim(substr($line, 1));
+				}
+				
+				// Categorize the line based on its tag
+				if (strpos($line, '@param') === 0) {
+					$param_lines[] = $line;
+					$current_section = 'param';
+				} 
+				else if (strpos($line, '@return') === 0) {
+					$return_line = $line;
+					$current_section = 'return';
+				}
+				else if (strpos($line, '@since') === 0) {
+					$since_line = $line;
+					$current_section = 'since';
+				}
+				else if (strpos($line, '@see') === 0) {
+					$see_lines[] = $line;
+					$current_section = 'see';
+				}
+				else if (strpos($line, '@') === 0) {
+					$other_lines[] = $line;
+					$current_section = 'other';
+				}
+				else {
+					// Add to the current section
+					if ($current_section === 'description') {
+						$description_lines[] = $line;
+					} else if ($current_section === 'param' && !empty($param_lines)) {
+						// Append to the last param line if it's a continuation
+						$last_index = count($param_lines) - 1;
+						$param_lines[$last_index] .= ' ' . $line;
+					} else if ($current_section === 'return' && !empty($return_line)) {
+						$return_line .= ' ' . $line;
+					} else if ($current_section === 'since' && !empty($since_line)) {
+						$since_line .= ' ' . $line;
+					} else if ($current_section === 'see' && !empty($see_lines)) {
+						$last_index = count($see_lines) - 1;
+						$see_lines[$last_index] .= ' ' . $line;
+					} else if ($current_section === 'other' && !empty($other_lines)) {
+						$last_index = count($other_lines) - 1;
+						$other_lines[$last_index] .= ' ' . $line;
+					}
+				}
+			}
+			
+			// Build the HTML output
+			$docblock_html = '';
+			
+			// Description section
+			if (!empty($description_lines)) {
+				$docblock_html .= '<div class="docblock-section">';
+				$docblock_html .= '<div class="docblock-section-content">' . esc_html(implode(' ', $description_lines)) . '</div>';
+				$docblock_html .= '</div>';
+			}
+			
+			// Parameters section
+			if (!empty($param_lines)) {
+				$docblock_html .= '<div class="docblock-section">';
+				$docblock_html .= '<div class="docblock-section-title">Parameters</div>';
+				$docblock_html .= '<table class="param-table">';
+				$docblock_html .= '<thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>';
+				$docblock_html .= '<tbody>';
+				
+				foreach ($param_lines as $param_line) {
+					// Remove @param tag
+					$param_line = trim(substr($param_line, 6));
+					
+					// Extract parts using regex to handle complex types and descriptions
+					if (preg_match('/^\s*(\S+)\s+(\$\S+)(?:\s+(.*))?$/', $param_line, $matches)) {
+						$type = $matches[1];
+						$name = $matches[2];
+						$description = isset($matches[3]) ? $matches[3] : '';
+						
+						// Check if parameter is optional
+						$optional = '';
+						if (strpos($type, '|null') !== false || strpos($description, 'optional') !== false) {
+							$optional = '<span class="param-optional">(Optional)</span>';
+						}
+						
+						$docblock_html .= '<tr>';
+						$docblock_html .= '<td class="param-name">' . esc_html($name) . $optional . '</td>';
+						$docblock_html .= '<td class="param-type">' . esc_html($type) . '</td>';
+						$docblock_html .= '<td class="param-description">' . esc_html($description) . '</td>';
+						$docblock_html .= '</tr>';
+					}
+				}
+				
+				$docblock_html .= '</tbody></table>';
+				$docblock_html .= '</div>';
+			}
+			
+			// Return section
+			if (!empty($return_line)) {
+				$docblock_html .= '<div class="docblock-section">';
+				$docblock_html .= '<div class="docblock-section-title">Return Value</div>';
+				
+				// Extract return type and description
+				$return_line = trim(substr($return_line, 7)); // Remove @return tag
+				if (preg_match('/^\s*(\S+)(?:\s+(.*))?$/', $return_line, $matches)) {
+					$return_type = $matches[1];
+					$return_description = isset($matches[2]) ? $matches[2] : '';
+					
+					$docblock_html .= '<div class="return-value">';
+					$docblock_html .= '<span class="return-type">' . esc_html($return_type) . '</span>';
+					if (!empty($return_description)) {
+						$docblock_html .= ' - ' . esc_html($return_description);
+					}
+					$docblock_html .= '</div>';
+				} else {
+					$docblock_html .= '<div class="return-value">' . esc_html($return_line) . '</div>';
+				}
+				
+				$docblock_html .= '</div>';
+			}
+			
+			// Since section
+			if (!empty($since_line)) {
+				$docblock_html .= '<div class="docblock-section">';
+				$docblock_html .= '<div class="docblock-section-title">Since</div>';
+				$docblock_html .= '<div>' . esc_html(trim(substr($since_line, 6))) . '</div>'; // Remove @since tag
+				$docblock_html .= '</div>';
+			}
+			
+			// See also section
+			if (!empty($see_lines)) {
+				$docblock_html .= '<div class="docblock-section">';
+				$docblock_html .= '<div class="docblock-section-title">See Also</div>';
+				$docblock_html .= '<ul>';
+				
+				foreach ($see_lines as $see_line) {
+					$docblock_html .= '<li>' . esc_html(trim(substr($see_line, 4))) . '</li>'; // Remove @see tag
+				}
+				
+				$docblock_html .= '</ul>';
+				$docblock_html .= '</div>';
+			}
+			
+			// Other tags
+			if (!empty($other_lines)) {
+				$docblock_html .= '<div class="docblock-section">';
+				$docblock_html .= '<div class="docblock-section-title">Additional Information</div>';
+				
+				foreach ($other_lines as $line) {
+					$docblock_html .= '<div>' . esc_html($line) . '</div>';
+				}
+				
+				$docblock_html .= '</div>';
+			}
+			
+			$html .= '<div class="docblock">' . $docblock_html . '</div>';
+		}
+		
+		// Add related hooks section if available
+		if ( !empty( $hook['related_hooks'] ) ) {
+			$html .= '<div class="related-hooks">
+				<h4>Related Hooks</h4>
+				<ul class="related-hooks-list">';
+			
+			foreach ( $hook['related_hooks'] as $related ) {
+				$related_type_class = $related['type'] === 'action' ? 'action' : 'filter';
+				$relationship_label = ucfirst(str_replace('_', ' ', $related['relationship']));
+				
+				$html .= '<li>
+					<a href="#" class="related-hook-link" data-hook-name="' . esc_attr( $related['name'] ) . '">
+						<span class="badge small ' . $related_type_class . '">' . esc_html( $related['type'] ) . '</span>
+						<span class="related-hook-name">' . esc_html( $related['name'] ) . '</span>
+					</a>
+					<span class="relationship-type" title="Relationship type">(' . esc_html( $relationship_label ) . ')</span>
+				</li>';
+			}
+			
+			$html .= '</ul>
+			</div>';
+		}
+		
 		$html .= '</td>
 		</tr>';
 	}
@@ -304,6 +851,36 @@ class OutputFormatter {
 	</div>
 
 	<script>
+	// Define toggleContext globally to avoid "not defined" error
+	function toggleContext(button) {
+		var contextCode = button.nextElementSibling;
+		var row = button.closest("tr");
+		
+		if (contextCode.style.display === "block") {
+			// Hide context, restore normal table layout
+			contextCode.style.display = "none";
+			button.textContent = "View Source Context";
+			row.classList.remove("showing-context");
+			
+			// Make sure to restore any hidden details cell
+			var detailsCell = row.querySelector("td[data-column=\'Details\']");
+			if (detailsCell) {
+				detailsCell.style.display = "";
+			}
+		} else {
+			// Show context, use full-width layout
+			contextCode.style.display = "block";
+			button.textContent = "Hide Source Context";
+			row.classList.add("showing-context");
+			
+			// Hide details cell
+			var detailsCell = row.querySelector("td[data-column=\'Details\']");
+			if (detailsCell) {
+				detailsCell.style.display = "none";
+			}
+		}
+	}
+
 	document.addEventListener("DOMContentLoaded", function() {
 		const searchInput = document.getElementById("search");
 		const typeFilter = document.getElementById("type-filter");
@@ -354,19 +931,31 @@ class OutputFormatter {
 			let visibleCount = 0;
 			
 			rows.forEach(row => {
-				const name = row.getAttribute("data-name").toLowerCase();
-				const type = row.getAttribute("data-type");
-				const isCore = row.getAttribute("data-core");
+				// Get attributes safely with null checks to prevent TypeError
+				const nameAttr = row.getAttribute("data-name");
+				const typeAttr = row.getAttribute("data-type");
+				const coreAttr = row.getAttribute("data-core");
 				
-				const matchesSearch = searchTerm === "" || name.includes(searchTerm);
-				const matchesType = typeValue === "all" || type === typeValue;
-				const matchesCore = coreValue === "all" || isCore === coreValue;
-				
-				if (matchesSearch && matchesType && matchesCore) {
+				// Only proceed with filtering if all required attributes exist
+				if (nameAttr && typeAttr && coreAttr) {
+					const name = nameAttr.toLowerCase();
+					const type = typeAttr;
+					const isCore = coreAttr;
+					
+					const matchesSearch = searchTerm === "" || name.includes(searchTerm);
+					const matchesType = typeValue === "all" || type === typeValue;
+					const matchesCore = coreValue === "all" || isCore === coreValue;
+					
+					if (matchesSearch && matchesType && matchesCore) {
+						row.style.display = "";
+						visibleCount++;
+					} else {
+						row.style.display = "none";
+					}
+				} else {
+					// If missing attributes, show the row to avoid hiding content
 					row.style.display = "";
 					visibleCount++;
-				} else {
-					row.style.display = "none";
 				}
 			});
 			
@@ -380,6 +969,33 @@ class OutputFormatter {
 		
 		// Initial count
 		filterTable();
+
+		// Handle clicking on related hook links
+		document.querySelectorAll(".related-hook-link").forEach(link => {
+			link.addEventListener("click", function(e) {
+				e.preventDefault();
+				const hookName = this.getAttribute("data-hook-name");
+				
+				// Clear any current search/filters
+				searchInput.value = "";
+				typeFilter.value = "all";
+				coreFilter.value = "all";
+				
+				// Filter to just this hook
+				searchInput.value = hookName;
+				filterTable();
+				
+				// Scroll to the hook
+				const hookRow = document.querySelector(\'tr[data-name="\' + hookName + \'"]\');
+				if (hookRow) {
+					hookRow.scrollIntoView({ behavior: "smooth", block: "center" });
+					hookRow.classList.add("highlight-row");
+					setTimeout(() => {
+						hookRow.classList.remove("highlight-row");
+					}, 2000);
+				}
+			});
+		});
 	});
 	</script>
 </body>

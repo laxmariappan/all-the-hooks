@@ -1,15 +1,20 @@
 # All The Hooks
 
-A WordPress plugin to discover and document hooks (actions and filters) in other WordPress plugins. The primary interface is a WP-CLI command which can scan plugin files and output detailed hook information in JSON or Markdown format.
+A WordPress plugin to discover and document hooks (actions and filters) in other WordPress plugins. The primary interface is a WP-CLI command which can scan plugin files and output detailed hook information in JSON, Markdown, or HTML format.
 
 ## Features
 
 - Scan WordPress plugins for all defined/used hooks
 - Identify both actions and filters
 - Extract and parse DocBlock comments for hooks when available
-- Output in JSON or Markdown format
+- Output in JSON, Markdown, or HTML format
+- Source context display with syntax highlighting (3-5 lines surrounding each hook)
+- Related hooks identification based on naming patterns and proximity
+- Interactive HTML output with dark/light mode and searchable interface
+- Structured parameter documentation with tables
 - Save results to file or output to CLI
 - Filter hooks by type (action or filter)
+- Responsive design for better viewing on all devices
 
 ## Installation
 
@@ -35,13 +40,13 @@ A WordPress plugin to discover and document hooks (actions and filters) in other
 The plugin provides a WP-CLI command with several options:
 
 ```
-wp all-the-hooks scan --plugin=<plugin-slug> [--format=<json|markdown>] [--include_docblocks=<true|false>] [--output_path=<path>] [--hook_type=<all|action|filter>]
+wp all-the-hooks scan --plugin=<plugin-slug> [--format=<json|markdown|html>] [--include_docblocks=<true|false>] [--output_path=<path>] [--hook_type=<all|action|filter>]
 ```
 
 ### Options
 
 - `--plugin=<plugin-slug>`: (Required) The slug of the installed WordPress plugin to scan.
-- `--format=<json|markdown>`: (Optional, default: `json`) Specifies the output format.
+- `--format=<json|markdown|html>`: (Optional, default: `json`) Specifies the output format.
 - `--include_docblocks=<true|false>`: (Optional, default: `false`) If `true`, the tool will extract and include the PHP DocBlock comments associated with hooks.
 - `--output_path=<path>`: (Optional) Specifies a custom file path to save the output. If not provided, the output is directed to STDOUT.
 - `--hook_type=<all|action|filter>`: (Optional, default: `all`) Filters the results by hook type.
@@ -61,6 +66,11 @@ wp all-the-hooks scan --plugin=akismet --include_docblocks=true --format=markdow
 Scan a plugin for actions only and save to a specific file:
 ```
 wp all-the-hooks scan --plugin=jetpack --hook_type=action --output_path=/path/to/jetpack-actions.json
+```
+
+Scan Easy Digital Downloads Pro plugin with full documentation and output as HTML to current directory:
+```
+wp all-the-hooks scan --plugin=easy-digital-downloads-pro --format=html --include_docblocks=true --output_path=./
 ```
 
 ## Output Format
@@ -128,6 +138,19 @@ This document lists all hooks (actions and filters) found in the plugin-slug plu
 ### `filter_hook_name`
 ...
 ```
+
+### HTML
+
+HTML output provides an interactive, user-friendly interface with the following features:
+
+- **Search and filter capabilities** - Find hooks by name, type (action/filter), or source (core/plugin)
+- **Dark/light mode toggle** - Adjust the interface for different viewing preferences
+- **Source context display** - View the actual code surrounding each hook with syntax highlighting
+- **Related hooks section** - Discover hooks that are related by naming patterns or proximity in code
+- **Structured documentation** - Well-formatted parameter tables and docblock information
+- **Responsive design** - Optimized viewing on desktop and mobile devices
+
+The HTML output is a standalone file that can be viewed in any browser without additional dependencies.
 
 ## How It Works
 

@@ -69,8 +69,12 @@ function all_the_hooks_admin_page() {
 		<h1><?php esc_html_e( 'All The Hooks', 'all-the-hooks' ); ?></h1>
 		<p><?php esc_html_e( 'This plugin is primarily designed to be used with WP-CLI.', 'all-the-hooks' ); ?></p>
 		<h2><?php esc_html_e( 'Usage', 'all-the-hooks' ); ?></h2>
-		<pre>wp all-the-hooks scan --plugin=&lt;plugin-slug&gt; [--format=&lt;json|markdown&gt;] [--include_docblocks=&lt;true|false&gt;] [--output_path=&lt;path&gt;] [--hook_type=&lt;all|action|filter&gt;]</pre>
+		<pre>wp all-the-hooks scan --plugin=&lt;plugin-slug&gt; [--format=&lt;json|markdown|html&gt;] [--include_docblocks=&lt;true|false&gt;] [--output_path=&lt;path&gt;] [--hook_type=&lt;all|action|filter&gt;]</pre>
+		<h3><?php esc_html_e( 'Example', 'all-the-hooks' ); ?></h3>
+		<pre>wp all-the-hooks scan --plugin=easy-digital-downloads-pro --format=html --include_docblocks=true --output_path=./</pre>
 		<p><?php esc_html_e( 'For complete documentation, please refer to the README.md file.', 'all-the-hooks' ); ?></p>
 	</div>
 	<?php
 }
+
+// WP-CLI commands are handled by the class in includes/cli/class-all-the-hooks-command.php
