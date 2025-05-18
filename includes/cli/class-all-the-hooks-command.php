@@ -154,11 +154,16 @@ class All_The_Hooks_Command {
 			WP_CLI::success( "Found " . count( $hooks ) . " hooks ({$action_count} actions, {$filter_count} filters)." );
 		} else {
 			// Save to file
-			$plugin_slug = basename($plugin_path);
-			$output_file = $plugin_slug . '-hooks.' . $format;
+			$output_file = $output_path;
 			
-			if ( ! preg_match( '/\.' . preg_quote( $ext, '/' ) . '$/i', $output_file ) ) {
-				$output_file .= '.' . $ext;
+			// If output_path doesn't have the right extension, add it
+			if ( ! preg_match( '/\.' . preg_quote( $ext, '/' ) . '$/i', $output_path ) ) {
+				$output_file = $output_path . '.' . $ext;
+			}
+			
+			// If output_path is just a directory, create a file with plugin slug
+			if ( is_dir( $output_path ) ) {
+				$output_file = rtrim( $output_path, '/' ) . '/' . $plugin_slug . '-hooks.' . $ext;
 			}
 			
 			$result = OutputFormatter::save_to_file( $output, $output_file );

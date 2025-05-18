@@ -151,7 +151,7 @@ class HookScanner {
 						'name' => $hook['name'],
 						'type' => $this->determine_hook_type($hook['name']),
 						'file' => $rel_path,
-						'docblock' => $hook['docblock'],
+						'docblock' => isset($hook['docblock']) ? $hook['docblock'] : '',
 					];
 					
 					$hooks[] = $hook_data;
