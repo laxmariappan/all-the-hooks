@@ -51,6 +51,19 @@ wp all-the-hooks scan --plugin=<plugin-slug> [--format=<json|markdown|html>] [--
 - `--output_path=<path>`: (Optional) Specifies a custom file path to save the output. If not provided, the output is directed to STDOUT.
 - `--hook_type=<all|action|filter>`: (Optional, default: `all`) Filters the results by hook type.
 
+### Screenshots
+
+Search form and filtering by type ( actions and filters ) and source ( core or plugin specific )
+![image](https://github.com/user-attachments/assets/eaeddccd-d183-432e-b752-db5983471da4)
+
+
+![image](https://github.com/user-attachments/assets/74c5b8e7-5c55-4676-8508-17689fa6ee7f)
+Hook with parameters
+
+
+![image](https://github.com/user-attachments/assets/de9ab44c-a46a-4076-a818-b1adbe4bff36)
+WooCommerce hook's context
+
 ### Examples
 
 Scan WooCommerce plugin for hooks and output JSON:
