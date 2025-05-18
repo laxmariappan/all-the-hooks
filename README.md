@@ -2,6 +2,12 @@
 
 A WordPress plugin to discover and document hooks (actions and filters) in other WordPress plugins. The primary interface is a WP-CLI command which can scan plugin files and output detailed hook information in JSON, Markdown, or HTML format.
 
+## Why This Tool? Isn't Documentation Enough?
+
+Many WordPress plugins contain action and filter hooks that aren't formally documented. While experienced developers can often identify and understand these hooks by examining the source code, manually searching through codebases each time you need to find an extension point can be time-consuming and inefficient.
+
+This utility was created to simplify that process, providing a quick and straightforward way to discover all available hooks within a plugin.
+
 ## Features
 
 - Scan WordPress plugins for all defined/used hooks
