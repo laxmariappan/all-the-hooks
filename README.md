@@ -10,10 +10,6 @@ This utility was created to simplify that process, providing a quick and straigh
 
 ## Installation
 
-Here is the complete zip file with composer packages installed, ready to install as a WP plugin.
-
-[all-the-hooks-complete.zip](https://github.com/user-attachments/files/20354118/all-the-hooks-complete.zip)
-
 - Clone the repo on wp-content/plugins, cd all-the-hooks and then run composer install
 
 ## Features
