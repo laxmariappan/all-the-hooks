@@ -26,7 +26,7 @@ export default function AdminApp() {
 	};
 
 	return (
-		<div className="ath-admin-app">
+		<div className={ `ath-admin-app ${ results ? 'has-results' : 'no-results' }` }>
 			<div className="ath-admin-header">
 				<h1>{ __( 'All The Hooks', 'all-the-hooks' ) }</h1>
 				<p className="description">
@@ -39,6 +39,7 @@ export default function AdminApp() {
 				onScanComplete={ handleScanComplete }
 				onScanError={ handleScanError }
 				isScanning={ isScanning }
+				hasResults={ !! results }
 			/>
 
 			{ results && <ResultsView results={ results } /> }

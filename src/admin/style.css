@@ -1,41 +1,117 @@
 /**
  * All The Hooks Admin Styles
- * Full-width layout using WordPress DataViews
+ * Adaptive layout: centered form → sticky compact form
  */
 
 .ath-admin-app {
-	max-width: 90%;
-	width: 90%;
+	width: 100%;
 	margin: 0 auto;
 	padding: 0;
+	transition: all 0.3s ease;
+}
+
+/* No results state - centered narrow layout */
+.ath-admin-app.no-results {
+	max-width: 800px;
+}
+
+/* Has results state - full width */
+.ath-admin-app.has-results {
+	max-width: 95%;
+	padding: 0 20px;
 }
 
 .ath-admin-header {
 	margin-bottom: 30px;
 	padding-bottom: 20px;
 	border-bottom: 1px solid #dcdcde;
+	transition: all 0.3s ease;
+}
+
+.has-results .ath-admin-header {
+	margin-bottom: 20px;
+	padding-bottom: 15px;
 }
 
 .ath-admin-header h1 {
 	margin: 0 0 10px 0;
 	font-size: 28px;
 	line-height: 1.2;
+	transition: font-size 0.3s ease;
+}
+
+.has-results .ath-admin-header h1 {
+	font-size: 24px;
 }
 
 .ath-admin-header .description {
 	margin: 0;
 	font-size: 14px;
 	color: #646970;
+	transition: opacity 0.3s ease;
 }
 
-/* Scan Form */
-.ath-scan-form {
-	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
-	padding: 24px;
+.has-results .ath-admin-header .description {
+	opacity: 0.8;
+}
+
+/* Scan Form Wrapper */
+.ath-scan-form-wrapper {
 	margin-bottom: 30px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	transition: all 0.3s ease;
+}
+
+/* Centered state (no results) */
+.ath-scan-form-wrapper.centered {
+	max-width: 700px;
+	margin: 0 auto 30px;
+}
+
+.ath-scan-form-wrapper.centered .components-card {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Compact state (with results) */
+.ath-scan-form-wrapper.compact {
+	position: sticky;
+	top: 32px;
+	z-index: 10;
+	margin-bottom: 20px;
+}
+
+.ath-scan-form-wrapper.compact .components-card {
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	border-left: 3px solid #2271b1;
+}
+
+.ath-scan-form-wrapper.compact h2 {
+	display: none;
+}
+
+/* Compact form layout */
+.ath-compact-form .components-base-control {
+	margin-bottom: 0 !important;
+}
+
+.ath-compact-form .components-radio-control__option {
+	margin-bottom: 0 !important;
+}
+
+.ath-compact-form .components-base-control__help {
+	display: none;
+}
+
+/* Align button with form controls in compact mode */
+.ath-compact-form .components-h-stack > .components-button {
+	margin-top: 28px;
+}
+
+.ath-compact-form .components-radio-control {
+	min-width: 120px;
+}
+
+.ath-compact-form .components-select-control {
+	min-width: 180px;
 }
 
 .ath-form-actions {
@@ -79,11 +155,23 @@
 
 /* Results View */
 .ath-results-view {
-	background: #fff;
-	border: 1px solid #c3c4c7;
-	border-radius: 4px;
-	padding: 24px;
-	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	width: 100%;
+	animation: fadeIn 0.3s ease;
+}
+
+.ath-results-view .components-card {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .ath-results-header {
@@ -104,19 +192,27 @@
 /* Summary Stats */
 .ath-summary-stats {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 	gap: 16px;
 	flex: 1;
+	width: 100%;
 }
 
 .ath-stat {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 12px;
-	background: #f0f0f1;
-	border-radius: 4px;
-	border-left: 3px solid #2271b1;
+	padding: 16px 12px;
+	background: linear-gradient(135deg, #f6f7f7 0%, #f0f0f1 100%);
+	border-radius: 6px;
+	border-left: 4px solid #2271b1;
+	transition: all 0.2s ease;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.ath-stat:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .ath-stat-number {
@@ -168,6 +264,16 @@
 	color: #1d2327;
 }
 
+.ath-badge-defined {
+	background: #2271b1;
+	color: #fff;
+}
+
+.ath-badge-used {
+	background: #8c8f94;
+	color: #fff;
+}
+
 .ath-badge-success {
 	background: #00a32a;
 	color: #fff;
@@ -212,7 +318,11 @@
 }
 
 .ath-col-name {
-	width: 30%;
+	width: 25%;
+}
+
+.ath-col-definition {
+	width: 10%;
 }
 
 .ath-col-type {
@@ -220,14 +330,14 @@
 }
 
 .ath-col-source {
-	width: 12%;
+	width: 10%;
 }
 
 .ath-col-file {
-	width: 35%;
+	width: 32%;
 }
 
-.ath-col-listeners {
+.ath-col-callbacks {
 	width: 13%;
 }
 

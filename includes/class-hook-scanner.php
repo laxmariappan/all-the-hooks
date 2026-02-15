@@ -449,12 +449,19 @@ class HookScanner {
 			$listeners_by_hook[ $hook_name ][] = $listener;
 		}
 
+		// Create a map of existing hooks by name
+		$existing_hooks = array();
+		foreach ( $hooks as $hook ) {
+			$existing_hooks[ $hook['name'] ] = true;
+		}
+
 		// Attach listeners to each hook
 		foreach ( $hooks as &$hook ) {
 			$hook_name = $hook['name'];
 
 			// Initialize listeners array
 			$hook['listeners'] = array();
+			$hook['defined_here'] = true; // This hook is defined in this plugin/theme
 
 			// Find matching listeners
 			if ( isset( $listeners_by_hook[ $hook_name ] ) ) {
@@ -475,7 +482,45 @@ class HookScanner {
 						'line'          => $listener['line'],
 					);
 				}
+
+				// Remove from listeners_by_hook since we've processed it
+				unset( $listeners_by_hook[ $hook_name ] );
 			}
+		}
+
+		// Now add "used hooks" - hooks that the plugin listens to but doesn't define
+		foreach ( $listeners_by_hook as $hook_name => $hook_listeners ) {
+			// Sort by priority (lower numbers first)
+			usort( $hook_listeners, function( $a, $b ) {
+				return $a['priority'] - $b['priority'];
+			});
+
+			// Get the first listener to determine type and file
+			$first_listener = $hook_listeners[0];
+
+			// Create a hook entry for this external hook
+			$hooks[] = array(
+				'name'          => $hook_name,
+				'type'          => $first_listener['type'],
+				'is_core'       => $this->is_core_hook( $hook_name ) ? 'yes' : 'no',
+				'file'          => $first_listener['file'],
+				'line_number'   => $first_listener['line'],
+				'function_call' => 'add_' . $first_listener['type'], // add_action or add_filter
+				'docblock'      => '',
+				'context'       => array(),
+				'context_start' => $first_listener['line'],
+				'related_hooks' => array(),
+				'defined_here'  => false, // This hook is NOT defined here, only used
+				'listeners'     => array_map( function( $listener ) {
+					return array(
+						'callback'      => $listener['callback'],
+						'priority'      => $listener['priority'],
+						'accepted_args' => $listener['accepted_args'],
+						'file'          => $listener['file'],
+						'line'          => $listener['line'],
+					);
+				}, $hook_listeners ),
+			);
 		}
 
 		return $hooks;

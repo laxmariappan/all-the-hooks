@@ -2,7 +2,7 @@
 /**
  * Plugin Name: All The Hooks
  * Description: WordPress plugin to discover and document hooks in plugins and themes
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Lax Mariappan
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'ALL_THE_HOOKS_VERSION', '1.1.0' );
+define( 'ALL_THE_HOOKS_VERSION', '1.2.0' );
 define( 'ALL_THE_HOOKS_FILE', __FILE__ );
 define( 'ALL_THE_HOOKS_PATH', plugin_dir_path( ALL_THE_HOOKS_FILE ) );
 define( 'ALL_THE_HOOKS_URL', plugin_dir_url( ALL_THE_HOOKS_FILE ) );

@@ -10,6 +10,7 @@ export default function ResultsView( { results } ) {
 	const [ searchTerm, setSearchTerm ] = useState( '' );
 	const [ filterType, setFilterType ] = useState( '' );
 	const [ filterSource, setFilterSource ] = useState( '' );
+	const [ filterDefinition, setFilterDefinition ] = useState( '' );
 
 	console.log( 'ResultsView received results:', results );
 
@@ -23,6 +24,10 @@ export default function ResultsView( { results } ) {
 			</Card>
 		);
 	}
+
+	// Count defined vs used hooks
+	const definedHooks = results.hooks.filter( ( h ) => h.defined_here ).length;
+	const usedHooks = results.hooks.filter( ( h ) => ! h.defined_here ).length;
 
 	// Filter hooks based on search and filters
 	const filteredHooks = results.hooks.filter( ( hook ) => {
@@ -38,6 +43,14 @@ export default function ResultsView( { results } ) {
 
 		// Source filter
 		if ( filterSource && hook.is_core !== filterSource ) {
+			return false;
+		}
+
+		// Definition filter (defined here vs used from elsewhere)
+		if ( filterDefinition === 'defined' && ! hook.defined_here ) {
+			return false;
+		}
+		if ( filterDefinition === 'used' && hook.defined_here ) {
 			return false;
 		}
 
@@ -68,16 +81,20 @@ export default function ResultsView( { results } ) {
 								<span className="ath-stat-label">{ __( 'Total Hooks', 'all-the-hooks' ) }</span>
 							</div>
 							<div className="ath-stat">
+								<span className="ath-stat-number">{ definedHooks }</span>
+								<span className="ath-stat-label">{ __( 'Defined Here', 'all-the-hooks' ) }</span>
+							</div>
+							<div className="ath-stat">
+								<span className="ath-stat-number">{ usedHooks }</span>
+								<span className="ath-stat-label">{ __( 'Used (External)', 'all-the-hooks' ) }</span>
+							</div>
+							<div className="ath-stat">
 								<span className="ath-stat-number">{ results.actions }</span>
 								<span className="ath-stat-label">{ __( 'Actions', 'all-the-hooks' ) }</span>
 							</div>
 							<div className="ath-stat">
 								<span className="ath-stat-number">{ results.filters }</span>
 								<span className="ath-stat-label">{ __( 'Filters', 'all-the-hooks' ) }</span>
-							</div>
-							<div className="ath-stat">
-								<span className="ath-stat-number">{ results.hooks_with_listeners }</span>
-								<span className="ath-stat-label">{ __( 'With Listeners', 'all-the-hooks' ) }</span>
 							</div>
 						</div>
 
@@ -92,6 +109,17 @@ export default function ResultsView( { results } ) {
 							value={ searchTerm }
 							onChange={ setSearchTerm }
 							placeholder={ __( 'Type to search...', 'all-the-hooks' ) }
+						/>
+
+						<SelectControl
+							label={ __( 'Filter by Definition', 'all-the-hooks' ) }
+							value={ filterDefinition }
+							options={ [
+								{ label: __( 'All Hooks', 'all-the-hooks' ), value: '' },
+								{ label: __( 'Defined Here', 'all-the-hooks' ), value: 'defined' },
+								{ label: __( 'Used (External)', 'all-the-hooks' ), value: 'used' },
+							] }
+							onChange={ setFilterDefinition }
 						/>
 
 						<SelectControl
@@ -129,10 +157,11 @@ export default function ResultsView( { results } ) {
 							<thead>
 								<tr>
 									<th className="ath-col-name">{ __( 'Hook Name', 'all-the-hooks' ) }</th>
+									<th className="ath-col-definition">{ __( 'Definition', 'all-the-hooks' ) }</th>
 									<th className="ath-col-type">{ __( 'Type', 'all-the-hooks' ) }</th>
 									<th className="ath-col-source">{ __( 'Source', 'all-the-hooks' ) }</th>
 									<th className="ath-col-file">{ __( 'File', 'all-the-hooks' ) }</th>
-									<th className="ath-col-listeners">{ __( 'Listeners', 'all-the-hooks' ) }</th>
+									<th className="ath-col-callbacks">{ __( 'Callbacks', 'all-the-hooks' ) }</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -143,7 +172,7 @@ export default function ResultsView( { results } ) {
 											{ hook.listeners && hook.listeners.length > 0 && (
 												<details className="ath-listeners-details">
 													<summary>
-														{ __( 'View Listeners', 'all-the-hooks' ) } ({ hook.listeners.length })
+														{ __( 'View Callbacks', 'all-the-hooks' ) } ({ hook.listeners.length })
 													</summary>
 													<div className="ath-listeners-list">
 														{ hook.listeners.map( ( listener, lidx ) => (
@@ -160,6 +189,11 @@ export default function ResultsView( { results } ) {
 												</details>
 											) }
 										</td>
+										<td className="ath-col-definition">
+											<span className={ `ath-badge ath-badge-${ hook.defined_here ? 'defined' : 'used' }` }>
+												{ hook.defined_here ? __( 'Defined', 'all-the-hooks' ) : __( 'Used', 'all-the-hooks' ) }
+											</span>
+										</td>
 										<td className="ath-col-type">
 											<span className={ `ath-badge ath-badge-${ hook.type }` }>{ hook.type }</span>
 										</td>
@@ -169,11 +203,15 @@ export default function ResultsView( { results } ) {
 											</span>
 										</td>
 										<td className="ath-col-file">
-											<code className="ath-file-path">
-												{ hook.file }:{ hook.line_number }
-											</code>
+											{ hook.file ? (
+												<code className="ath-file-path">
+													{ hook.file }:{ hook.line_number }
+												</code>
+											) : (
+												<span className="ath-no-file">{ __( 'N/A', 'all-the-hooks' ) }</span>
+											) }
 										</td>
-										<td className="ath-col-listeners">
+										<td className="ath-col-callbacks">
 											<span className={ `ath-badge ${ hook.listeners?.length > 0 ? 'ath-badge-success' : '' }` }>
 												{ hook.listeners?.length || 0 }
 											</span>

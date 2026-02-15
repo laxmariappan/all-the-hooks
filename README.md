@@ -24,12 +24,16 @@ This utility was created to simplify that process, providing a quick and straigh
 - Source context display with syntax highlighting (3-5 lines surrounding each hook)
 - Related hooks identification based on naming patterns and proximity
 
-### Admin Interface (NEW in v1.1.0)
+### Admin Interface (NEW in v1.1.0, Enhanced in v1.2.0)
 - **Modern WordPress admin GUI** - No CLI required
+- **Adaptive layout** - Centered form transitions to compact sticky bar when viewing results
+- **Hook definition tracking** - See both hooks defined in plugins/themes AND external hooks they use
 - AJAX-based scanning with real-time progress
 - Interactive results table with search and filtering
-- View hook listeners and their details
+- Filter by definition status (Defined Here vs Used/External)
+- View hook listeners/callbacks with priority and arguments
 - Download results directly from the admin
+- Smooth transitions and animations for better UX
 - Fully responsive design using WordPress native components
 
 ### Output Formats
@@ -205,6 +209,7 @@ JSON output follows this structure:
     "line_number": 123,
     "function_call": "add_action|add_filter|do_action|apply_filters",
     "is_core": "yes|no",
+    "defined_here": true,
     "docblock_raw": "/**\n * DocBlock comment\n */",
     "docblock_parsed": {
       "summary": "Short description",
@@ -329,6 +334,18 @@ For each file in the target plugin:
 - [phpDocumentor/ReflectionDocBlock](https://github.com/phpDocumentor/ReflectionDocBlock) - Used for DocBlock parsing
 
 ## Changelog
+
+### v1.2.0 (2025-02-15)
+- **NEW:** Track both defined and used hooks - see hooks a plugin defines AND external hooks it uses
+- **NEW:** Adaptive layout - centered form transforms to compact sticky bar when viewing results
+- **NEW:** Definition filter - filter results by "Defined Here" vs "Used (External)"
+- **NEW:** Enhanced statistics - separate counts for defined vs used hooks
+- **IMPROVED:** Sleek UI with smooth transitions and animations
+- **IMPROVED:** Better form alignment and spacing in compact mode
+- **IMPROVED:** Full-width results table for better data visibility (95% width to prevent scrollbar)
+- **IMPROVED:** Renamed "Listeners" to "Callbacks" for clarity
+- **FIXED:** Horizontal scrollbar issue in results view
+- **FIXED:** Button alignment in compact form layout
 
 ### v1.1.0 (2025-02-15)
 - **NEW:** Theme scanning support - scan WordPress themes in addition to plugins
