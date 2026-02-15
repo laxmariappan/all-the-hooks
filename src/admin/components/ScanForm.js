@@ -1,10 +1,20 @@
 /**
- * Scan Form Component using DataForm
+ * Scan Form Component using WordPress Components
  */
 import { useState, useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { DataForm } from '@wordpress/dataviews';
-import { Button, Notice, Spinner } from '@wordpress/components';
+import {
+	Button,
+	Notice,
+	Spinner,
+	Card,
+	CardBody,
+	SelectControl,
+	RadioControl,
+	CheckboxControl,
+	__experimentalVStack as VStack,
+	__experimentalHStack as HStack,
+} from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
 export default function ScanForm( { onScanStart, onScanComplete, onScanError, isScanning } ) {
@@ -30,23 +40,21 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 	const fetchPlugins = async () => {
 		try {
 			const response = await apiFetch( {
-				path: '/wp/v2/plugins',
+				path: '/all-the-hooks/v1/plugins',
 				method: 'GET',
-			} ).catch( () => {
-				// Fallback to custom endpoint if WP REST API doesn't have plugins endpoint
-				return apiFetch( {
-					path: '/all-the-hooks/v1/plugins',
-					method: 'GET',
-				} );
 			} );
 
-			const pluginOptions = response.map( ( plugin ) => ( {
-				label: plugin.name,
-				value: plugin.plugin.split( '/' )[ 0 ],
-			} ) );
+			const pluginOptions = [
+				{ label: __( '-- Select a Plugin --', 'all-the-hooks' ), value: '' },
+				...response.map( ( plugin ) => ( {
+					label: plugin.name,
+					value: plugin.slug,
+				} ) ),
+			];
 			setPlugins( pluginOptions );
 		} catch ( err ) {
 			console.error( 'Failed to fetch plugins:', err );
+			setError( __( 'Failed to load plugins list.', 'all-the-hooks' ) );
 		}
 	};
 
@@ -57,67 +65,26 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 				method: 'GET',
 			} );
 
-			const themeOptions = response.themes.map( ( theme ) => ( {
-				label: theme.name,
-				value: theme.slug,
-			} ) );
+			const themeOptions = [
+				{ label: __( '-- Select a Theme --', 'all-the-hooks' ), value: '' },
+				...response.themes.map( ( theme ) => ( {
+					label: theme.name,
+					value: theme.slug,
+				} ) ),
+			];
 			setThemes( themeOptions );
 		} catch ( err ) {
 			console.error( 'Failed to fetch themes:', err );
+			setError( __( 'Failed to load themes list.', 'all-the-hooks' ) );
 		}
 	};
 
-	// Define form fields for DataForm
-	const fields = [
-		{
-			id: 'source_type',
-			label: __( 'Source Type', 'all-the-hooks' ),
-			type: 'radio',
-			elements: [
-				{ label: __( 'Plugin', 'all-the-hooks' ), value: 'plugin' },
-				{ label: __( 'Theme', 'all-the-hooks' ), value: 'theme' },
-			],
-		},
-		{
-			id: 'source_slug',
-			label:
-				formData.source_type === 'plugin'
-					? __( 'Select Plugin', 'all-the-hooks' )
-					: __( 'Select Theme', 'all-the-hooks' ),
-			type: 'select',
-			elements: formData.source_type === 'plugin' ? plugins : themes,
-			description:
-				formData.source_type === 'plugin'
-					? __( 'Choose the plugin you want to scan for hooks.', 'all-the-hooks' )
-					: __( 'Choose the theme you want to scan for hooks.', 'all-the-hooks' ),
-		},
-		{
-			id: 'hook_type',
-			label: __( 'Hook Type', 'all-the-hooks' ),
-			type: 'select',
-			elements: [
-				{ label: __( 'All (Actions & Filters)', 'all-the-hooks' ), value: 'all' },
-				{ label: __( 'Actions Only', 'all-the-hooks' ), value: 'action' },
-				{ label: __( 'Filters Only', 'all-the-hooks' ), value: 'filter' },
-			],
-		},
-		{
-			id: 'include_docblocks',
-			label: __( 'Include DocBlocks', 'all-the-hooks' ),
-			type: 'checkbox',
-			description: __( 'Extract and include PHPDoc comments for each hook.', 'all-the-hooks' ),
-		},
-		{
-			id: 'format',
-			label: __( 'Output Format', 'all-the-hooks' ),
-			type: 'select',
-			elements: [
-				{ label: 'JSON', value: 'json' },
-				{ label: 'Markdown', value: 'markdown' },
-				{ label: 'HTML', value: 'html' },
-			],
-		},
-	];
+	const updateFormData = ( key, value ) => {
+		setFormData( ( prev ) => ( {
+			...prev,
+			[ key ]: value,
+		} ) );
+	};
 
 	const handleSubmit = async ( e ) => {
 		e.preventDefault();
@@ -140,29 +107,22 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 				} );
 			}, 300 );
 
-			const response = await apiFetch( {
-				path: '/wp/v2/admin/ajax',
-				method: 'POST',
-				data: {
-					action: 'ath_scan_source',
-					nonce: athAdminData.nonce,
-					...formData,
-				},
-			} ).catch( async () => {
-				// Fallback to direct AJAX call
-				const formDataObj = new FormData();
-				formDataObj.append( 'action', 'ath_scan_source' );
-				formDataObj.append( 'nonce', athAdminData.nonce );
-				Object.keys( formData ).forEach( ( key ) => {
-					formDataObj.append( key, formData[ key ] );
-				} );
+			// Make AJAX call
+			const formDataObj = new FormData();
+			formDataObj.append( 'action', 'ath_scan_source' );
+			formDataObj.append( 'nonce', athAdminData.nonce );
+			formDataObj.append( 'source_type', formData.source_type );
+			formDataObj.append( 'source_slug', formData.source_slug );
+			formDataObj.append( 'hook_type', formData.hook_type );
+			formDataObj.append( 'include_docblocks', formData.include_docblocks ? '1' : '0' );
+			formDataObj.append( 'format', formData.format );
 
-				const ajaxResponse = await fetch( athAdminData.ajaxUrl, {
-					method: 'POST',
-					body: formDataObj,
-				} );
-				return ajaxResponse.json();
+			const ajaxResponse = await fetch( athAdminData.ajaxUrl, {
+				method: 'POST',
+				body: formDataObj,
 			} );
+
+			const response = await ajaxResponse.json();
 
 			clearInterval( progressInterval );
 			setProgress( 100 );
@@ -180,28 +140,87 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 	};
 
 	return (
-		<div className="ath-scan-form">
-			{ error && (
-				<Notice status="error" isDismissible onRemove={ () => setError( null ) }>
-					{ error }
-				</Notice>
-			) }
+		<Card>
+			<CardBody>
+				<h2>{ __( 'Scan Configuration', 'all-the-hooks' ) }</h2>
 
-			<form onSubmit={ handleSubmit }>
-				<DataForm data={ formData } fields={ fields } onChange={ setFormData } form={ { type: 'regular' } } />
+				{ error && (
+					<Notice status="error" isDismissible onRemove={ () => setError( null ) }>
+						{ error }
+					</Notice>
+				) }
 
-				<div className="ath-form-actions">
-					<Button variant="primary" type="submit" disabled={ isScanning } size="default">
-						{ isScanning ? (
-							<>
-								<Spinner />
-								{ __( 'Scanning...', 'all-the-hooks' ) }
-							</>
+				<form onSubmit={ handleSubmit }>
+					<VStack spacing={ 4 }>
+						<RadioControl
+							label={ __( 'Source Type', 'all-the-hooks' ) }
+							selected={ formData.source_type }
+							options={ [
+								{ label: __( 'Plugin', 'all-the-hooks' ), value: 'plugin' },
+								{ label: __( 'Theme', 'all-the-hooks' ), value: 'theme' },
+							] }
+							onChange={ ( value ) => {
+								updateFormData( 'source_type', value );
+								updateFormData( 'source_slug', '' ); // Reset selection when switching type
+							} }
+						/>
+
+						{ formData.source_type === 'plugin' ? (
+							<SelectControl
+								label={ __( 'Select Plugin', 'all-the-hooks' ) }
+								value={ formData.source_slug }
+								options={ plugins }
+								onChange={ ( value ) => updateFormData( 'source_slug', value ) }
+								help={ __( 'Choose the plugin you want to scan for hooks.', 'all-the-hooks' ) }
+							/>
 						) : (
-							__( 'Scan for Hooks', 'all-the-hooks' )
+							<SelectControl
+								label={ __( 'Select Theme', 'all-the-hooks' ) }
+								value={ formData.source_slug }
+								options={ themes }
+								onChange={ ( value ) => updateFormData( 'source_slug', value ) }
+								help={ __( 'Choose the theme you want to scan for hooks.', 'all-the-hooks' ) }
+							/>
 						) }
-					</Button>
-				</div>
+
+						<SelectControl
+							label={ __( 'Hook Type', 'all-the-hooks' ) }
+							value={ formData.hook_type }
+							options={ [
+								{ label: __( 'All (Actions & Filters)', 'all-the-hooks' ), value: 'all' },
+								{ label: __( 'Actions Only', 'all-the-hooks' ), value: 'action' },
+								{ label: __( 'Filters Only', 'all-the-hooks' ), value: 'filter' },
+							] }
+							onChange={ ( value ) => updateFormData( 'hook_type', value ) }
+						/>
+
+						<CheckboxControl
+							label={ __( 'Include DocBlocks', 'all-the-hooks' ) }
+							checked={ formData.include_docblocks }
+							onChange={ ( value ) => updateFormData( 'include_docblocks', value ) }
+							help={ __( 'Extract and include PHPDoc comments for each hook.', 'all-the-hooks' ) }
+						/>
+
+						<SelectControl
+							label={ __( 'Output Format', 'all-the-hooks' ) }
+							value={ formData.format }
+							options={ [
+								{ label: 'JSON', value: 'json' },
+								{ label: 'Markdown', value: 'markdown' },
+								{ label: 'HTML', value: 'html' },
+							] }
+							onChange={ ( value ) => updateFormData( 'format', value ) }
+						/>
+
+						<HStack justify="flex-start">
+							<Button variant="primary" type="submit" disabled={ isScanning } isBusy={ isScanning }>
+								{ isScanning
+									? __( 'Scanning...', 'all-the-hooks' )
+									: __( 'Scan for Hooks', 'all-the-hooks' ) }
+							</Button>
+						</HStack>
+					</VStack>
+				</form>
 
 				{ isScanning && (
 					<div className="ath-progress">
@@ -216,7 +235,7 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 						</p>
 					</div>
 				) }
-			</form>
-		</div>
+			</CardBody>
+		</Card>
 	);
 }
