@@ -1,0 +1,351 @@
+/**
+ * All The Hooks - Admin Styles
+ * Uses WordPress native admin styles
+ */
+
+.ath-admin-container {
+	max-width: 1200px;
+}
+
+/* Scan Form */
+.ath-scan-form {
+	margin-top: 20px;
+	padding: 20px;
+}
+
+.ath-scan-form h2 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ath-form .form-table {
+	margin-top: 20px;
+}
+
+/* Progress Indicator */
+.ath-progress {
+	margin-top: 20px;
+	padding: 20px;
+	background: #f0f0f1;
+	border-radius: 4px;
+}
+
+.ath-progress-bar {
+	width: 100%;
+	height: 30px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	overflow: hidden;
+	margin-bottom: 10px;
+}
+
+.ath-progress-indicator {
+	height: 100%;
+	background: linear-gradient(90deg, #2271b1 0%, #135e96 100%);
+	transition: width 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-weight: 600;
+}
+
+.ath-progress-text {
+	margin: 0;
+	text-align: center;
+	color: #1d2327;
+	font-weight: 500;
+}
+
+/* Results Section */
+.ath-results {
+	margin-top: 30px;
+}
+
+.ath-results .card {
+	padding: 20px;
+}
+
+.ath-results h2 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+/* Summary Grid */
+.ath-results-summary {
+	margin: 20px 0;
+}
+
+.ath-summary-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 20px;
+	margin-bottom: 20px;
+}
+
+.ath-summary-item {
+	background: #f0f0f1;
+	padding: 20px;
+	border-radius: 4px;
+	text-align: center;
+	border-left: 4px solid #2271b1;
+}
+
+.ath-summary-number {
+	display: block;
+	font-size: 36px;
+	font-weight: 700;
+	color: #2271b1;
+	line-height: 1.2;
+}
+
+.ath-summary-label {
+	display: block;
+	margin-top: 8px;
+	font-size: 14px;
+	color: #50575e;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+/* Results Actions */
+.ath-results-actions {
+	margin: 20px 0;
+	padding: 15px;
+	background: #f0f0f1;
+	border-radius: 4px;
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.ath-results-actions .button {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.ath-results-actions .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+/* Results Filters */
+.ath-results-filters {
+	margin: 20px 0;
+	padding: 15px;
+	background: #f0f0f1;
+	border-radius: 4px;
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.ath-results-filters input[type="search"],
+.ath-results-filters select {
+	flex: 1;
+	min-width: 200px;
+}
+
+/* Results Table */
+#ath-results-table-container {
+	margin-top: 20px;
+}
+
+#ath-hooks-table {
+	margin-top: 15px;
+}
+
+#ath-hooks-table th {
+	font-weight: 600;
+}
+
+#ath-hooks-table .column-name {
+	width: 30%;
+}
+
+#ath-hooks-table .column-type {
+	width: 10%;
+}
+
+#ath-hooks-table .column-source {
+	width: 12%;
+}
+
+#ath-hooks-table .column-file {
+	width: 35%;
+}
+
+#ath-hooks-table .column-listeners {
+	width: 13%;
+}
+
+#ath-hooks-table code {
+	font-size: 12px;
+	background: #f0f0f1;
+	padding: 2px 6px;
+	border-radius: 3px;
+}
+
+/* Badges */
+.ath-badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	background: #f0f0f1;
+	color: #1d2327;
+}
+
+.ath-badge-action {
+	background: #d63638;
+	color: #fff;
+}
+
+.ath-badge-filter {
+	background: #2271b1;
+	color: #fff;
+}
+
+.ath-badge-core {
+	background: #00a32a;
+	color: #fff;
+}
+
+.ath-badge-custom {
+	background: #dba617;
+	color: #1d2327;
+}
+
+.ath-badge-success {
+	background: #00a32a;
+	color: #fff;
+}
+
+/* Listeners Row */
+.ath-listeners-row td {
+	background: #f6f7f7;
+	padding: 0 !important;
+}
+
+.ath-listeners-container {
+	padding: 15px;
+}
+
+.ath-listeners-container h4 {
+	margin: 0 0 15px 0;
+	color: #1d2327;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.ath-listeners-container table {
+	width: 100%;
+	background: #fff;
+}
+
+.ath-listeners-container table th {
+	background: #f0f0f1;
+	padding: 8px 10px;
+	font-size: 12px;
+	text-align: left;
+}
+
+.ath-listeners-container table td {
+	padding: 8px 10px;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 13px;
+}
+
+.ath-listeners-container table code {
+	font-size: 11px;
+}
+
+/* Toggle Row Button */
+.toggle-row {
+	background: transparent;
+	border: none;
+	color: #2271b1;
+	cursor: pointer;
+	padding: 0;
+	margin-left: 10px;
+}
+
+.toggle-row:hover {
+	color: #135e96;
+}
+
+.toggle-row::before {
+	content: "\f140";
+	font-family: dashicons;
+	font-size: 16px;
+	line-height: 1;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+	.ath-summary-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.ath-results-filters {
+		flex-direction: column;
+	}
+
+	.ath-results-filters input[type="search"],
+	.ath-results-filters select {
+		width: 100%;
+	}
+
+	.ath-results-actions {
+		flex-direction: column;
+	}
+
+	.ath-results-actions .button {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	.ath-summary-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* WordPress Admin Compatibility */
+.wp-admin .ath-admin-container .notice {
+	margin: 20px 0 20px 0;
+}
+
+/* Dark Mode Support (optional, uses WP admin color schemes) */
+.admin-color-midnight .ath-summary-item {
+	border-left-color: #e14d43;
+}
+
+.admin-color-midnight .ath-summary-number {
+	color: #e14d43;
+}
+
+.admin-color-ocean .ath-summary-item {
+	border-left-color: #9ebaa0;
+}
+
+.admin-color-ocean .ath-summary-number {
+	color: #738e96;
+}
+
+.admin-color-sunrise .ath-summary-item {
+	border-left-color: #dd823b;
+}
+
+.admin-color-sunrise .ath-summary-number {
+	color: #dd823b;
+}

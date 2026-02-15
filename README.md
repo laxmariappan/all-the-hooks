@@ -1,6 +1,6 @@
 # All The Hooks
 
-A WordPress plugin to discover and document hooks (actions and filters) in other WordPress plugins. The primary interface is a WP-CLI command which can scan plugin files and output detailed hook information in JSON, Markdown, or HTML format.
+A WordPress plugin to discover and document hooks (actions and filters) in WordPress plugins and themes. Features both a WP-CLI command and a modern admin GUI interface to scan and analyze hooks with detailed information including DocBlocks, listeners, and relationships.
 
 ## Why This Tool? Isn't Documentation Enough?
 
@@ -14,17 +14,29 @@ This utility was created to simplify that process, providing a quick and straigh
 
 ## Features
 
-- Scan WordPress plugins for all defined/used hooks
+### Core Functionality
+- **Scan WordPress plugins AND themes** for all defined/used hooks
+- **Hook Usage Analyzer** - See what functions are listening to each hook
 - Identify both actions and filters
 - Extract and parse DocBlock comments for hooks when available
+- Track hook listeners (callbacks, priorities, accepted arguments)
 - Output in JSON, Markdown, or HTML format
 - Source context display with syntax highlighting (3-5 lines surrounding each hook)
 - Related hooks identification based on naming patterns and proximity
+
+### Admin Interface (NEW in v1.1.0)
+- **Modern WordPress admin GUI** - No CLI required
+- AJAX-based scanning with real-time progress
+- Interactive results table with search and filtering
+- View hook listeners and their details
+- Download results directly from the admin
+- Fully responsive design using WordPress native components
+
+### Output Formats
 - Interactive HTML output with dark/light mode and searchable interface
 - Structured parameter documentation with tables
 - Save results to file or output to CLI
 - Filter hooks by type (action or filter)
-- Responsive design for better viewing on all devices
 
 ## Installation
 
@@ -47,19 +59,40 @@ This utility was created to simplify that process, providing a quick and straigh
 
 ## Usage
 
+The plugin can be used in two ways:
+
+### 1. Admin GUI (Recommended for most users)
+
+1. Navigate to **All The Hooks** in your WordPress admin menu
+2. Select whether you want to scan a plugin or theme
+3. Choose the plugin/theme from the dropdown
+4. Configure scan options (hook type, docblocks, output format)
+5. Click "Scan for Hooks"
+6. View results in an interactive table
+7. Download results in your preferred format
+
+### 2. WP-CLI Command (For developers and automation)
+
 The plugin provides a WP-CLI command with several options:
 
-```
+```bash
+# Scan a plugin
 wp all-the-hooks scan --plugin=<plugin-slug> [--format=<json|markdown|html>] [--include_docblocks=<true|false>] [--output_path=<path>] [--hook_type=<all|action|filter>]
+
+# Scan a theme
+wp all-the-hooks scan --theme=<theme-slug> [--format=<json|markdown|html>] [--include_docblocks=<true|false>] [--output_path=<path>] [--hook_type=<all|action|filter>]
 ```
 
-### Options
+### WP-CLI Options
 
-- `--plugin=<plugin-slug>`: (Required) The slug of the installed WordPress plugin to scan.
+- `--plugin=<plugin-slug>`: The slug of the installed WordPress plugin to scan.
+- `--theme=<theme-slug>`: The slug of the installed WordPress theme to scan.
 - `--format=<json|markdown|html>`: (Optional, default: `json`) Specifies the output format.
 - `--include_docblocks=<true|false>`: (Optional, default: `false`) If `true`, the tool will extract and include the PHP DocBlock comments associated with hooks.
-- `--output_path=<path>`: (Optional) Specifies a custom file path to save the output. If not provided, the output is directed to STDOUT.
+- `--output_path=<path>`: (Optional) Specifies a custom file path to save the output. If not provided, saves to `.hooks/` directory.
 - `--hook_type=<all|action|filter>`: (Optional, default: `all`) Filters the results by hook type.
+
+**Note:** You must specify either `--plugin` OR `--theme`, not both.
 
 ### Screenshots
 
@@ -74,26 +107,36 @@ Hook with parameters
 ![image](https://github.com/user-attachments/assets/de9ab44c-a46a-4076-a818-b1adbe4bff36)
 WooCommerce hook's context
 
-### Examples
+### WP-CLI Examples
 
-Scan WooCommerce plugin for hooks and output JSON:
-```
+**Scan a plugin:**
+```bash
 wp all-the-hooks scan --plugin=woocommerce
 ```
 
-Scan Akismet plugin for hooks, include docblocks, and output as Markdown:
+**Scan a theme:**
+```bash
+wp all-the-hooks scan --theme=twentytwentyfour
 ```
+
+**Scan with docblocks and output as Markdown:**
+```bash
 wp all-the-hooks scan --plugin=akismet --include_docblocks=true --format=markdown
 ```
 
-Scan a plugin for actions only and save to a specific file:
-```
+**Scan for actions only:**
+```bash
 wp all-the-hooks scan --plugin=jetpack --hook_type=action --output_path=/path/to/jetpack-actions.json
 ```
 
-Scan Easy Digital Downloads Pro plugin with full documentation and output as HTML to current directory:
-```
+**Scan with full documentation as HTML:**
+```bash
 wp all-the-hooks scan --plugin=easy-digital-downloads-pro --format=html --include_docblocks=true --output_path=./
+```
+
+**Scan active theme:**
+```bash
+wp all-the-hooks scan --theme=storefront --format=html --include_docblocks=true
 ```
 
 ## Output Format
@@ -110,6 +153,7 @@ JSON output follows this structure:
     "file": "relative/path/to/file.php",
     "line_number": 123,
     "function_call": "add_action|add_filter|do_action|apply_filters",
+    "is_core": "yes|no",
     "docblock_raw": "/**\n * DocBlock comment\n */",
     "docblock_parsed": {
       "summary": "Short description",
@@ -118,7 +162,23 @@ JSON output follows this structure:
         {"name": "$param1", "type": "string", "description": "Description of param1"}
       ],
       "return": {"type": "mixed", "description": "Return description"}
-    }
+    },
+    "listeners": [
+      {
+        "callback": "my_function_name",
+        "priority": 10,
+        "accepted_args": 1,
+        "file": "path/to/file.php",
+        "line": 45
+      }
+    ],
+    "related_hooks": [
+      {
+        "name": "related_hook_name",
+        "type": "action|filter",
+        "relationship": "naming pattern|proximity"
+      }
+    ]
   }
 ]
 ```
@@ -209,13 +269,33 @@ For each file in the target plugin:
 ## Limitations
 
 - Currently only supports identifying hooks with literal string names (does not handle variable hook names or concatenated strings)
-- Only scans plugin files (theme scanning is a future enhancement)
 - DocBlock extraction requires properly formatted DocBlocks immediately preceding hook functions
+- Listener detection works for standard WordPress hook registration patterns
 
 ## Credits
 
 - [nikic/PHP-Parser](https://github.com/nikic/PHP-Parser) - Used for PHP code parsing
 - [phpDocumentor/ReflectionDocBlock](https://github.com/phpDocumentor/ReflectionDocBlock) - Used for DocBlock parsing
+
+## Changelog
+
+### v1.1.0 (2025-02-15)
+- **NEW:** Theme scanning support - scan WordPress themes in addition to plugins
+- **NEW:** Hook Usage Analyzer - see what functions are listening to each hook
+- **NEW:** Admin GUI interface with WordPress native components
+- **NEW:** AJAX-based scanning with real-time progress
+- **NEW:** Interactive results table with search and filtering
+- **NEW:** Download results directly from admin interface
+- **IMPROVED:** Enhanced JSON output with listener information
+- **IMPROVED:** Better hook relationship detection
+
+### v1.0.0
+- Initial release
+- WP-CLI command for scanning plugins
+- JSON, Markdown, and HTML output formats
+- DocBlock extraction
+- Source context display
+- Related hooks identification
 
 ## License
 

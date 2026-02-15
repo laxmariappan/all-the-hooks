@@ -18,12 +18,15 @@ if ( class_exists( 'WP_CLI' ) ) {
 }
 
 /**
- * Discovers hooks in WordPress plugins.
+ * Discovers hooks in WordPress plugins and themes.
  *
  * ## EXAMPLES
  *
  *     # Scan WooCommerce plugin for hooks and output JSON
  *     $ wp all-the-hooks scan --plugin=woocommerce
+ *
+ *     # Scan a theme for hooks
+ *     $ wp all-the-hooks scan --theme=twentytwentyfour
  *
  *     # Scan Akismet plugin for hooks, include docblocks, and output as Markdown
  *     $ wp all-the-hooks scan --plugin=akismet --include_docblocks=true --format=markdown
@@ -33,16 +36,22 @@ if ( class_exists( 'WP_CLI' ) ) {
  *
  *     # Scan Easy Digital Downloads Pro plugin with full documentation and output as HTML to current directory
  *     $ wp all-the-hooks scan --plugin=easy-digital-downloads-pro --format=html --include_docblocks=true --output_path=./
+ *
+ *     # Scan active theme for hooks with HTML output
+ *     $ wp all-the-hooks scan --theme=storefront --format=html --include_docblocks=true
  */
 class All_The_Hooks_Command {
 
 	/**
-	 * Scans a plugin for WordPress hooks.
+	 * Scans a plugin or theme for WordPress hooks.
 	 *
 	 * ## OPTIONS
 	 *
-	 * --plugin=<plugin-slug>
+	 * [--plugin=<plugin-slug>]
 	 * : The slug of the plugin to scan.
+	 *
+	 * [--theme=<theme-slug>]
+	 * : The slug of the theme to scan.
 	 *
 	 * [--format=<format>]
 	 * : Output format (json, markdown, or html).
@@ -81,11 +90,17 @@ class All_The_Hooks_Command {
 	 *     # Scan WooCommerce plugin for hooks
 	 *     $ wp all-the-hooks scan --plugin=woocommerce
 	 *
+	 *     # Scan a theme for hooks
+	 *     $ wp all-the-hooks scan --theme=twentytwentyfour
+	 *
 	 *     # Include docblocks and output as Markdown
 	 *     $ wp all-the-hooks scan --plugin=akismet --include_docblocks=true --format=markdown
 	 *
 	 *     # Scan Easy Digital Downloads Pro plugin with full documentation and output as HTML to current directory
 	 *     $ wp all-the-hooks scan --plugin=easy-digital-downloads-pro --format=html --include_docblocks=true --output_path=./
+	 *
+	 *     # Scan active theme for hooks
+	 *     $ wp all-the-hooks scan --theme=storefront --format=html --include_docblocks=true
 	 *
 	 * @when after_wp_load
 	 *
@@ -95,15 +110,25 @@ class All_The_Hooks_Command {
 	public function scan( $args, $assoc_args ) {
 		// Parse arguments
 		$plugin_slug = $assoc_args['plugin'] ?? '';
+		$theme_slug  = $assoc_args['theme'] ?? '';
 		$format = $assoc_args['format'] ?? 'json';
 		$include_docblocks = filter_var( $assoc_args['include_docblocks'] ?? 'false', FILTER_VALIDATE_BOOLEAN );
 		$output_path = $assoc_args['output_path'] ?? '';
 		$hook_type = $assoc_args['hook_type'] ?? 'all';
-		
-		if ( empty( $plugin_slug ) ) {
-			WP_CLI::error( 'Plugin slug is required. Use --plugin=<plugin-slug>.' );
+
+		// Determine source type and slug
+		if ( empty( $plugin_slug ) && empty( $theme_slug ) ) {
+			WP_CLI::error( 'Either --plugin=<plugin-slug> or --theme=<theme-slug> is required.' );
 			return;
 		}
+
+		if ( ! empty( $plugin_slug ) && ! empty( $theme_slug ) ) {
+			WP_CLI::error( 'Please specify either --plugin or --theme, not both.' );
+			return;
+		}
+
+		$source_type = ! empty( $theme_slug ) ? 'theme' : 'plugin';
+		$source_slug = ! empty( $theme_slug ) ? $theme_slug : $plugin_slug;
 		
 		// Validate format
 		if ( ! in_array( $format, array( 'json', 'markdown', 'html' ), true ) ) {
@@ -117,10 +142,10 @@ class All_The_Hooks_Command {
 			return;
 		}
 		
-		WP_CLI::log( "Scanning {$plugin_slug} plugin for hooks..." );
-		
+		WP_CLI::log( "Scanning {$source_slug} {$source_type} for hooks..." );
+
 		// Create scanner
-		$scanner = new HookScanner( $plugin_slug, $hook_type, $include_docblocks );
+		$scanner = new HookScanner( $source_slug, $hook_type, $include_docblocks, $source_type );
 		$hooks = $scanner->scan();
 		
 		// Check for errors
@@ -131,19 +156,19 @@ class All_The_Hooks_Command {
 		
 		// Check if any hooks were found
 		if ( empty( $hooks ) ) {
-			WP_CLI::warning( "No hooks found in {$plugin_slug} plugin." );
+			WP_CLI::warning( "No hooks found in {$source_slug} {$source_type}." );
 			return;
 		}
-		
+
 		// Format output
 		if ( 'json' === $format ) {
-			$output = OutputFormatter::to_json( $hooks, $plugin_slug );
+			$output = OutputFormatter::to_json( $hooks, $source_slug );
 			$ext = 'json';
 		} elseif ( 'markdown' === $format ) {
-			$output = OutputFormatter::to_markdown( $hooks, $plugin_slug );
+			$output = OutputFormatter::to_markdown( $hooks, $source_slug );
 			$ext = 'md';
 		} else {
-			$output = OutputFormatter::to_html( $hooks, $plugin_slug );
+			$output = OutputFormatter::to_html( $hooks, $source_slug );
 			$ext = 'html';
 		}
 		
@@ -160,15 +185,15 @@ class All_The_Hooks_Command {
 				}
 			}
 			
-			$output_file = $hooks_dir . '/' . $plugin_slug . '-hooks.' . $ext;
+			$output_file = $hooks_dir . '/' . $source_slug . '-hooks.' . $ext;
 			WP_CLI::log( "No output path specified. Saving to default location: {$output_file}" );
 		} else {
 			// If output_path is specified, use it
 			$output_file = $output_path;
 			
-			// If output_path is just a directory, create a file with plugin slug
+			// If output_path is just a directory, create a file with source slug
 			if ( is_dir( $output_path ) ) {
-				$output_file = rtrim( $output_path, '/' ) . '/' . $plugin_slug . '-hooks.' . $ext;
+				$output_file = rtrim( $output_path, '/' ) . '/' . $source_slug . '-hooks.' . $ext;
 			}
 			// If output_path doesn't have the right extension, add it
 			elseif ( ! preg_match( '/\.' . preg_quote( $ext, '/' ) . '$/i', $output_path ) ) {

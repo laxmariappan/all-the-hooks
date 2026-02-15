@@ -20,11 +20,18 @@ use PhpParser\NodeVisitor\NameResolver;
 class HookScanner {
 
 	/**
-	 * Plugin slug to scan
+	 * Source slug (plugin or theme slug) to scan
 	 *
 	 * @var string
 	 */
-	private $plugin_slug;
+	private $source_slug;
+
+	/**
+	 * Source type (plugin or theme)
+	 *
+	 * @var string
+	 */
+	private $source_type;
 
 	/**
 	 * Hook type to filter by (all, action, filter)
@@ -43,14 +50,28 @@ class HookScanner {
 	/**
 	 * HookScanner constructor.
 	 *
-	 * @param string $plugin_slug       Plugin slug to scan.
+	 * @param string $source_slug       Plugin or theme slug to scan.
 	 * @param string $hook_type         Type of hooks to scan for (all, action, or filter).
 	 * @param bool   $include_docblocks Whether to include DocBlocks in the results.
+	 * @param string $source_type       Source type: 'plugin' or 'theme'. Default 'plugin'.
 	 */
-	public function __construct( $plugin_slug, $hook_type = 'all', $include_docblocks = false ) {
-		$this->plugin_slug      = $plugin_slug;
-		$this->hook_type        = $hook_type;
+	public function __construct( $source_slug, $hook_type = 'all', $include_docblocks = false, $source_type = 'plugin' ) {
+		$this->source_slug       = $source_slug;
+		$this->source_type       = $source_type;
+		$this->hook_type         = $hook_type;
 		$this->include_docblocks = $include_docblocks;
+	}
+
+	/**
+	 * Get the source directory path (plugin or theme).
+	 *
+	 * @return string|false Path to the source directory or false if not found.
+	 */
+	public function get_source_directory() {
+		if ( 'theme' === $this->source_type ) {
+			return $this->get_theme_directory();
+		}
+		return $this->get_plugin_directory();
 	}
 
 	/**
@@ -59,13 +80,31 @@ class HookScanner {
 	 * @return string|false Path to the plugin directory or false if not found.
 	 */
 	public function get_plugin_directory() {
-		$plugin_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug;
+		$plugin_dir = WP_PLUGIN_DIR . '/' . $this->source_slug;
 		if ( ! is_dir( $plugin_dir ) ) {
 			// Try with standard format (plugin-slug/plugin-slug.php).
-			$plugin_dir = WP_PLUGIN_DIR . '/' . $this->plugin_slug;
+			$plugin_dir = WP_PLUGIN_DIR . '/' . $this->source_slug;
 		}
 
 		return is_dir( $plugin_dir ) ? $plugin_dir : false;
+	}
+
+	/**
+	 * Get the theme directory path.
+	 *
+	 * @return string|false Path to the theme directory or false if not found.
+	 */
+	public function get_theme_directory() {
+		// Check if it's an active theme
+		$theme = wp_get_theme( $this->source_slug );
+
+		if ( $theme->exists() ) {
+			return $theme->get_stylesheet_directory();
+		}
+
+		// Fallback: check themes directory directly
+		$theme_dir = get_theme_root() . '/' . $this->source_slug;
+		return is_dir( $theme_dir ) ? $theme_dir : false;
 	}
 
 	/**
@@ -101,31 +140,40 @@ class HookScanner {
 	}
 
 	/**
-	 * Scan the plugin for hooks.
+	 * Scan the plugin or theme for hooks.
 	 *
 	 * @return array|WP_Error Array of hooks or WP_Error on failure.
 	 */
 	public function scan() {
-		$plugin_directory = $this->get_plugin_directory();
-		
-		if ( ! $plugin_directory ) {
-			return new \WP_Error( 'plugin_not_found', "Plugin '{$this->plugin_slug}' not found." );
+		$source_directory = $this->get_source_directory();
+
+		if ( ! $source_directory ) {
+			$source_type = ucfirst( $this->source_type );
+			return new \WP_Error(
+				strtolower( $this->source_type ) . '_not_found',
+				"{$source_type} '{$this->source_slug}' not found."
+			);
 		}
-		
-		$php_files = $this->get_php_files( $plugin_directory );
+
+		$php_files = $this->get_php_files( $source_directory );
 		
 		if ( empty( $php_files ) ) {
-			return new \WP_Error( 'no_php_files', "No PHP files found in plugin '{$this->plugin_slug}'." );
+			$source_type = ucfirst( $this->source_type );
+			return new \WP_Error(
+				'no_php_files',
+				"No PHP files found in {$source_type} '{$this->source_slug}'."
+			);
 		}
 		
 		$hooks = array();
+		$all_listeners = array(); // Store all listeners across all files
 		$parser = ( new ParserFactory() )->create( ParserFactory::PREFER_PHP7 );
 		$traverser = new NodeTraverser();
 		$traverser->addVisitor( new NameResolver() );
 		$hook_visitor = new HookVisitor( $this->include_docblocks );
 		$traverser->addVisitor( $hook_visitor );
-		
-		// First pass: collect all hooks
+
+		// First pass: collect all hooks and listeners
 		foreach ( $php_files as $file_path ) {
 			$file_content = file_get_contents( $file_path );
 			$file_lines = file( $file_path );
@@ -138,15 +186,23 @@ class HookScanner {
 				$ast = $parser->parse( $file_content );
 				$traverser->traverse( $ast );
 				$file_hooks = $hook_visitor->get_hooks();
-				
+				$file_listeners = $hook_visitor->get_listeners();
+
+				// Process listeners and store them with file information
+				foreach ( $file_listeners as $listener ) {
+					$rel_path = str_replace( $source_directory . '/', '', $file_path );
+					$listener['file'] = $rel_path;
+					$all_listeners[] = $listener;
+				}
+
 				foreach ( $file_hooks as $hook ) {
 					// Filter by hook type if specified
 					if ( 'all' !== $this->hook_type && $hook['type'] !== $this->hook_type ) {
 						continue;
 					}
 					
-					// Calculate relative path from plugin directory
-					$rel_path = str_replace( $plugin_directory . '/', '', $file_path );
+					// Calculate relative path from source directory
+					$rel_path = str_replace( $source_directory . '/', '', $file_path );
 					
 					// Determine if it's a core hook
 					$is_core = $this->is_core_hook($hook['name']);
@@ -184,10 +240,15 @@ class HookScanner {
 		}
 		
 		// Second pass: identify relationships between hooks
-		if (count($hooks) > 0) {
-			$hooks = $this->identify_hook_relationships($hooks);
+		if ( count( $hooks ) > 0 ) {
+			$hooks = $this->identify_hook_relationships( $hooks );
 		}
-		
+
+		// Third pass: attach listeners to hooks
+		if ( count( $all_listeners ) > 0 ) {
+			$hooks = $this->attach_listeners_to_hooks( $hooks, $all_listeners );
+		}
+
 		return $hooks;
 	}
 
@@ -360,13 +421,63 @@ class HookScanner {
 	private function is_core_hook($hook_name) {
 		// List of common WordPress hook prefixes
 		$wp_core_prefixes = ['wp_', 'pre_', 'post_', 'after_', 'before_', 'the_', 'admin_'];
-		
+
 		foreach ($wp_core_prefixes as $prefix) {
 			if (strpos($hook_name, $prefix) === 0) {
 				return true;
 			}
 		}
-		
+
 		return false;
+	}
+
+	/**
+	 * Attach listeners to their corresponding hooks
+	 *
+	 * @param array $hooks     Array of collected hooks
+	 * @param array $listeners Array of collected listeners
+	 * @return array Updated hooks with listener data
+	 */
+	private function attach_listeners_to_hooks( $hooks, $listeners ) {
+		// Create a map of listeners by hook name for faster lookup
+		$listeners_by_hook = array();
+		foreach ( $listeners as $listener ) {
+			$hook_name = $listener['hook_name'];
+			if ( ! isset( $listeners_by_hook[ $hook_name ] ) ) {
+				$listeners_by_hook[ $hook_name ] = array();
+			}
+			$listeners_by_hook[ $hook_name ][] = $listener;
+		}
+
+		// Attach listeners to each hook
+		foreach ( $hooks as &$hook ) {
+			$hook_name = $hook['name'];
+
+			// Initialize listeners array
+			$hook['listeners'] = array();
+
+			// Find matching listeners
+			if ( isset( $listeners_by_hook[ $hook_name ] ) ) {
+				$matching_listeners = $listeners_by_hook[ $hook_name ];
+
+				// Sort by priority (lower numbers first)
+				usort( $matching_listeners, function( $a, $b ) {
+					return $a['priority'] - $b['priority'];
+				});
+
+				// Add listener information
+				foreach ( $matching_listeners as $listener ) {
+					$hook['listeners'][] = array(
+						'callback'      => $listener['callback'],
+						'priority'      => $listener['priority'],
+						'accepted_args' => $listener['accepted_args'],
+						'file'          => $listener['file'],
+						'line'          => $listener['line'],
+					);
+				}
+			}
+		}
+
+		return $hooks;
 	}
 } 

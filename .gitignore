@@ -35,4 +35,5 @@ wp-content/
 /output/
 /.hooks/
 *.html
-*.json
+*.json.hooks/
+vendor/
