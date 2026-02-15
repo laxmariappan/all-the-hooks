@@ -42,10 +42,8 @@ function all_the_hooks_missing_composer_dependencies() {
 
 // WP-CLI command is autoloaded from includes/cli/class-all-the-hooks-command.php through Composer
 
-// Initialize Admin Interface
-if ( is_admin() ) {
-	$admin_interface = new AllTheHooks\Admin_Interface();
-}
+// Initialize Admin Interface (always, not just in admin, so REST API routes get registered)
+$admin_interface = new AllTheHooks\Admin_Interface();
 
 // Admin menu for the plugin
 add_action( 'admin_menu', 'all_the_hooks_add_admin_menu' );
