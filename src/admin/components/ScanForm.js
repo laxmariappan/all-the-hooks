@@ -6,7 +6,6 @@ import { __ } from '@wordpress/i18n';
 import {
 	Button,
 	Notice,
-	Spinner,
 	Card,
 	CardBody,
 	SelectControl,
@@ -30,19 +29,25 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 	const [ themes, setThemes ] = useState( [] );
 	const [ error, setError ] = useState( null );
 	const [ progress, setProgress ] = useState( 0 );
+	const [ loading, setLoading ] = useState( true );
 
 	// Fetch available plugins and themes
 	useEffect( () => {
+		console.log( 'ScanForm mounted, fetching data...' );
+		console.log( 'athAdminData:', window.athAdminData );
 		fetchPlugins();
 		fetchThemes();
 	}, [] );
 
 	const fetchPlugins = async () => {
 		try {
+			console.log( 'Fetching plugins from:', '/all-the-hooks/v1/plugins' );
 			const response = await apiFetch( {
 				path: '/all-the-hooks/v1/plugins',
 				method: 'GET',
 			} );
+
+			console.log( 'Plugins response:', response );
 
 			const pluginOptions = [
 				{ label: __( '-- Select a Plugin --', 'all-the-hooks' ), value: '' },
@@ -52,18 +57,24 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 				} ) ),
 			];
 			setPlugins( pluginOptions );
+			console.log( 'Plugins set:', pluginOptions );
 		} catch ( err ) {
 			console.error( 'Failed to fetch plugins:', err );
-			setError( __( 'Failed to load plugins list.', 'all-the-hooks' ) );
+			setError( __( 'Failed to load plugins list. Check console for details.', 'all-the-hooks' ) );
+		} finally {
+			setLoading( false );
 		}
 	};
 
 	const fetchThemes = async () => {
 		try {
+			console.log( 'Fetching themes from:', '/all-the-hooks/v1/themes' );
 			const response = await apiFetch( {
 				path: '/all-the-hooks/v1/themes',
 				method: 'GET',
 			} );
+
+			console.log( 'Themes response:', response );
 
 			const themeOptions = [
 				{ label: __( '-- Select a Theme --', 'all-the-hooks' ), value: '' },
@@ -73,13 +84,15 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 				} ) ),
 			];
 			setThemes( themeOptions );
+			console.log( 'Themes set:', themeOptions );
 		} catch ( err ) {
 			console.error( 'Failed to fetch themes:', err );
-			setError( __( 'Failed to load themes list.', 'all-the-hooks' ) );
+			setError( __( 'Failed to load themes list. Check console for details.', 'all-the-hooks' ) );
 		}
 	};
 
 	const updateFormData = ( key, value ) => {
+		console.log( `Updating form data: ${ key } =`, value );
 		setFormData( ( prev ) => ( {
 			...prev,
 			[ key ]: value,
@@ -89,6 +102,8 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 	const handleSubmit = async ( e ) => {
 		e.preventDefault();
 		setError( null );
+
+		console.log( 'Form submitted with data:', formData );
 
 		if ( ! formData.source_slug ) {
 			setError( __( 'Please select a plugin or theme to scan.', 'all-the-hooks' ) );
@@ -107,22 +122,26 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 				} );
 			}, 300 );
 
+			console.log( 'Making AJAX request to:', window.athAdminData?.ajaxUrl );
+			console.log( 'Request data:', formData );
+
 			// Make AJAX call
 			const formDataObj = new FormData();
 			formDataObj.append( 'action', 'ath_scan_source' );
-			formDataObj.append( 'nonce', athAdminData.nonce );
+			formDataObj.append( 'nonce', window.athAdminData?.nonce || '' );
 			formDataObj.append( 'source_type', formData.source_type );
 			formDataObj.append( 'source_slug', formData.source_slug );
 			formDataObj.append( 'hook_type', formData.hook_type );
 			formDataObj.append( 'include_docblocks', formData.include_docblocks ? '1' : '0' );
 			formDataObj.append( 'format', formData.format );
 
-			const ajaxResponse = await fetch( athAdminData.ajaxUrl, {
+			const ajaxResponse = await fetch( window.athAdminData?.ajaxUrl || '/wp-admin/admin-ajax.php', {
 				method: 'POST',
 				body: formDataObj,
 			} );
 
 			const response = await ajaxResponse.json();
+			console.log( 'AJAX response:', response );
 
 			clearInterval( progressInterval );
 			setProgress( 100 );
@@ -134,10 +153,21 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 				onScanError();
 			}
 		} catch ( err ) {
+			console.error( 'Scan error:', err );
 			setError( err.message || __( 'Failed to scan. Please try again.', 'all-the-hooks' ) );
 			onScanError();
 		}
 	};
+
+	if ( loading ) {
+		return (
+			<Card>
+				<CardBody>
+					<p>{ __( 'Loading plugins and themes...', 'all-the-hooks' ) }</p>
+				</CardBody>
+			</Card>
+		);
+	}
 
 	return (
 		<Card>
@@ -171,7 +201,7 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 								value={ formData.source_slug }
 								options={ plugins }
 								onChange={ ( value ) => updateFormData( 'source_slug', value ) }
-								help={ __( 'Choose the plugin you want to scan for hooks.', 'all-the-hooks' ) }
+								help={ __( `Choose the plugin you want to scan for hooks. (${ plugins.length - 1 } plugins available)`, 'all-the-hooks' ) }
 							/>
 						) : (
 							<SelectControl
@@ -179,7 +209,7 @@ export default function ScanForm( { onScanStart, onScanComplete, onScanError, is
 								value={ formData.source_slug }
 								options={ themes }
 								onChange={ ( value ) => updateFormData( 'source_slug', value ) }
-								help={ __( 'Choose the theme you want to scan for hooks.', 'all-the-hooks' ) }
+								help={ __( `Choose the theme you want to scan for hooks. (${ themes.length - 1 } themes available)`, 'all-the-hooks' ) }
 							/>
 						) }
 
