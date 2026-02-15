@@ -175,6 +175,12 @@ class Admin_Interface {
 		$include_docblocks = filter_var( $_POST['include_docblocks'] ?? false, FILTER_VALIDATE_BOOLEAN );
 		$format            = sanitize_text_field( $_POST['format'] ?? 'json' );
 
+		// Debug logging
+		error_log( 'ATH AJAX Request - Source Type: ' . $source_type );
+		error_log( 'ATH AJAX Request - Source Slug: ' . $source_slug );
+		error_log( 'ATH AJAX Request - Hook Type: ' . $hook_type );
+		error_log( 'ATH AJAX Request - Include DocBlocks: ' . ( $include_docblocks ? 'true' : 'false' ) );
+
 		if ( empty( $source_slug ) ) {
 			wp_send_json_error( array( 'message' => __( 'Source slug is required.', 'all-the-hooks' ) ) );
 		}
@@ -183,6 +189,14 @@ class Admin_Interface {
 		$scanner = new HookScanner( $source_slug, $hook_type, $include_docblocks, $source_type );
 		$hooks   = $scanner->scan();
 
+		// Debug logging
+		error_log( 'ATH Scan Result - Is WP_Error: ' . ( is_wp_error( $hooks ) ? 'yes' : 'no' ) );
+		if ( is_wp_error( $hooks ) ) {
+			error_log( 'ATH Scan Error: ' . $hooks->get_error_message() );
+		} else {
+			error_log( 'ATH Scan Result - Hooks Found: ' . count( $hooks ) );
+		}
+
 		// Check for errors
 		if ( is_wp_error( $hooks ) ) {
 			wp_send_json_error( array( 'message' => $hooks->get_error_message() ) );
@@ -190,7 +204,14 @@ class Admin_Interface {
 
 		// Check if any hooks were found
 		if ( empty( $hooks ) ) {
-			wp_send_json_error( array( 'message' => __( 'No hooks found.', 'all-the-hooks' ) ) );
+			wp_send_json_error( array(
+				'message' => __( 'No hooks found.', 'all-the-hooks' ),
+				'debug' => array(
+					'source_type' => $source_type,
+					'source_slug' => $source_slug,
+					'hook_type' => $hook_type,
+				)
+			) );
 		}
 
 		// Format output

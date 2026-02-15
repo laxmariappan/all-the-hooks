@@ -1,112 +1,48 @@
 /**
- * Results View Component using DataViews
+ * Results View Component - Simple Table Version
  */
-import { useState, useMemo } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { DataViews } from '@wordpress/dataviews';
-import { Button } from '@wordpress/components';
+import { Button, Card, CardBody, TextControl, SelectControl } from '@wordpress/components';
 import { download } from '@wordpress/icons';
 
 export default function ResultsView( { results } ) {
-	const [ view, setView ] = useState( {
-		type: 'table',
-		perPage: 20,
-		page: 1,
-		sort: {
-			field: 'name',
-			direction: 'asc',
-		},
-		search: '',
-		filters: [],
-		hiddenFields: [],
-		layout: {},
+	const [ searchTerm, setSearchTerm ] = useState( '' );
+	const [ filterType, setFilterType ] = useState( '' );
+	const [ filterSource, setFilterSource ] = useState( '' );
+
+	console.log( 'ResultsView received results:', results );
+
+	if ( ! results || ! results.hooks || results.hooks.length === 0 ) {
+		return (
+			<Card>
+				<CardBody>
+					<h2>{ __( 'No Results', 'all-the-hooks' ) }</h2>
+					<p>{ __( 'No hooks were found in the scan.', 'all-the-hooks' ) }</p>
+				</CardBody>
+			</Card>
+		);
+	}
+
+	// Filter hooks based on search and filters
+	const filteredHooks = results.hooks.filter( ( hook ) => {
+		// Search filter
+		if ( searchTerm && ! hook.name.toLowerCase().includes( searchTerm.toLowerCase() ) ) {
+			return false;
+		}
+
+		// Type filter
+		if ( filterType && hook.type !== filterType ) {
+			return false;
+		}
+
+		// Source filter
+		if ( filterSource && hook.is_core !== filterSource ) {
+			return false;
+		}
+
+		return true;
 	} );
-
-	// Prepare data for DataViews
-	const data = useMemo( () => {
-		return results.hooks.map( ( hook, index ) => ( {
-			id: index,
-			...hook,
-			listeners_count: hook.listeners?.length || 0,
-		} ) );
-	}, [ results.hooks ] );
-
-	// Define fields for DataViews
-	const fields = [
-		{
-			id: 'name',
-			label: __( 'Hook Name', 'all-the-hooks' ),
-			enableHiding: false,
-			enableSorting: true,
-			render: ( { item } ) => <strong>{ item.name }</strong>,
-		},
-		{
-			id: 'type',
-			label: __( 'Type', 'all-the-hooks' ),
-			enableHiding: false,
-			enableSorting: true,
-			elements: [
-				{ value: 'action', label: __( 'Action', 'all-the-hooks' ) },
-				{ value: 'filter', label: __( 'Filter', 'all-the-hooks' ) },
-			],
-			render: ( { item } ) => (
-				<span className={ `ath-badge ath-badge-${ item.type }` }>{ item.type }</span>
-			),
-			filterBy: {
-				operators: [ 'is', 'isNot' ],
-			},
-		},
-		{
-			id: 'is_core',
-			label: __( 'Source', 'all-the-hooks' ),
-			enableSorting: true,
-			elements: [
-				{ value: 'yes', label: __( 'Core', 'all-the-hooks' ) },
-				{ value: 'no', label: __( 'Custom', 'all-the-hooks' ) },
-			],
-			render: ( { item } ) => (
-				<span className={ `ath-badge ath-badge-${ item.is_core === 'yes' ? 'core' : 'custom' }` }>
-					{ item.is_core === 'yes' ? __( 'Core', 'all-the-hooks' ) : __( 'Custom', 'all-the-hooks' ) }
-				</span>
-			),
-			filterBy: {
-				operators: [ 'is', 'isNot' ],
-			},
-		},
-		{
-			id: 'file',
-			label: __( 'File', 'all-the-hooks' ),
-			enableSorting: true,
-			render: ( { item } ) => (
-				<code className="ath-file-path">
-					{ item.file }:{ item.line_number }
-				</code>
-			),
-		},
-		{
-			id: 'listeners_count',
-			label: __( 'Listeners', 'all-the-hooks' ),
-			enableSorting: true,
-			render: ( { item } ) => (
-				<span className={ `ath-badge ${ item.listeners_count > 0 ? 'ath-badge-success' : '' }` }>
-					{ item.listeners_count }
-				</span>
-			),
-		},
-	];
-
-	// Define actions
-	const actions = [
-		{
-			id: 'view-details',
-			label: __( 'View Details', 'all-the-hooks' ),
-			isPrimary: true,
-			callback: ( items ) => {
-				// Show details modal or expand row
-				console.log( 'View details for:', items );
-			},
-		},
-	];
 
 	const handleDownload = () => {
 		const dataStr = JSON.stringify( results.hooks, null, 2 );
@@ -121,44 +57,134 @@ export default function ResultsView( { results } ) {
 
 	return (
 		<div className="ath-results-view">
-			<div className="ath-results-header">
-				<h2>{ __( 'Scan Results', 'all-the-hooks' ) }</h2>
+			<Card>
+				<CardBody>
+					<div className="ath-results-header">
+						<h2>{ __( 'Scan Results', 'all-the-hooks' ) }</h2>
 
-				<div className="ath-summary-stats">
-					<div className="ath-stat">
-						<span className="ath-stat-number">{ results.total }</span>
-						<span className="ath-stat-label">{ __( 'Total Hooks', 'all-the-hooks' ) }</span>
-					</div>
-					<div className="ath-stat">
-						<span className="ath-stat-number">{ results.actions }</span>
-						<span className="ath-stat-label">{ __( 'Actions', 'all-the-hooks' ) }</span>
-					</div>
-					<div className="ath-stat">
-						<span className="ath-stat-number">{ results.filters }</span>
-						<span className="ath-stat-label">{ __( 'Filters', 'all-the-hooks' ) }</span>
-					</div>
-					<div className="ath-stat">
-						<span className="ath-stat-number">{ results.hooks_with_listeners }</span>
-						<span className="ath-stat-label">{ __( 'With Listeners', 'all-the-hooks' ) }</span>
-					</div>
-				</div>
+						<div className="ath-summary-stats">
+							<div className="ath-stat">
+								<span className="ath-stat-number">{ results.total }</span>
+								<span className="ath-stat-label">{ __( 'Total Hooks', 'all-the-hooks' ) }</span>
+							</div>
+							<div className="ath-stat">
+								<span className="ath-stat-number">{ results.actions }</span>
+								<span className="ath-stat-label">{ __( 'Actions', 'all-the-hooks' ) }</span>
+							</div>
+							<div className="ath-stat">
+								<span className="ath-stat-number">{ results.filters }</span>
+								<span className="ath-stat-label">{ __( 'Filters', 'all-the-hooks' ) }</span>
+							</div>
+							<div className="ath-stat">
+								<span className="ath-stat-number">{ results.hooks_with_listeners }</span>
+								<span className="ath-stat-label">{ __( 'With Listeners', 'all-the-hooks' ) }</span>
+							</div>
+						</div>
 
-				<Button variant="secondary" icon={ download } onClick={ handleDownload }>
-					{ __( 'Download Results', 'all-the-hooks' ) }
-				</Button>
-			</div>
+						<Button variant="secondary" icon={ download } onClick={ handleDownload }>
+							{ __( 'Download Results', 'all-the-hooks' ) }
+						</Button>
+					</div>
 
-			<DataViews
-				data={ data }
-				fields={ fields }
-				view={ view }
-				onChangeView={ setView }
-				actions={ actions }
-				paginationInfo={ {
-					totalItems: data.length,
-					totalPages: Math.ceil( data.length / view.perPage ),
-				} }
-			/>
+					<div className="ath-filters">
+						<TextControl
+							label={ __( 'Search Hooks', 'all-the-hooks' ) }
+							value={ searchTerm }
+							onChange={ setSearchTerm }
+							placeholder={ __( 'Type to search...', 'all-the-hooks' ) }
+						/>
+
+						<SelectControl
+							label={ __( 'Filter by Type', 'all-the-hooks' ) }
+							value={ filterType }
+							options={ [
+								{ label: __( 'All Types', 'all-the-hooks' ), value: '' },
+								{ label: __( 'Actions', 'all-the-hooks' ), value: 'action' },
+								{ label: __( 'Filters', 'all-the-hooks' ), value: 'filter' },
+							] }
+							onChange={ setFilterType }
+						/>
+
+						<SelectControl
+							label={ __( 'Filter by Source', 'all-the-hooks' ) }
+							value={ filterSource }
+							options={ [
+								{ label: __( 'All Sources', 'all-the-hooks' ), value: '' },
+								{ label: __( 'Core Hooks', 'all-the-hooks' ), value: 'yes' },
+								{ label: __( 'Custom Hooks', 'all-the-hooks' ), value: 'no' },
+							] }
+							onChange={ setFilterSource }
+						/>
+					</div>
+
+					<div className="ath-results-count">
+						<p>
+							{ __( 'Showing', 'all-the-hooks' ) } <strong>{ filteredHooks.length }</strong> { __( 'of', 'all-the-hooks' ) }{ ' ' }
+							<strong>{ results.hooks.length }</strong> { __( 'hooks', 'all-the-hooks' ) }
+						</p>
+					</div>
+
+					<div className="ath-table-wrapper">
+						<table className="wp-list-table widefat fixed striped">
+							<thead>
+								<tr>
+									<th className="ath-col-name">{ __( 'Hook Name', 'all-the-hooks' ) }</th>
+									<th className="ath-col-type">{ __( 'Type', 'all-the-hooks' ) }</th>
+									<th className="ath-col-source">{ __( 'Source', 'all-the-hooks' ) }</th>
+									<th className="ath-col-file">{ __( 'File', 'all-the-hooks' ) }</th>
+									<th className="ath-col-listeners">{ __( 'Listeners', 'all-the-hooks' ) }</th>
+								</tr>
+							</thead>
+							<tbody>
+								{ filteredHooks.map( ( hook, index ) => (
+									<tr key={ index }>
+										<td className="ath-col-name">
+											<strong>{ hook.name }</strong>
+											{ hook.listeners && hook.listeners.length > 0 && (
+												<details className="ath-listeners-details">
+													<summary>
+														{ __( 'View Listeners', 'all-the-hooks' ) } ({ hook.listeners.length })
+													</summary>
+													<div className="ath-listeners-list">
+														{ hook.listeners.map( ( listener, lidx ) => (
+															<div key={ lidx } className="ath-listener-item">
+																<code>{ listener.callback }</code>
+																<span className="ath-listener-meta">
+																	{ __( 'Priority:', 'all-the-hooks' ) } { listener.priority } |{ ' ' }
+																	{ __( 'Args:', 'all-the-hooks' ) } { listener.accepted_args }
+																</span>
+																<small>{ listener.file }:{ listener.line }</small>
+															</div>
+														) ) }
+													</div>
+												</details>
+											) }
+										</td>
+										<td className="ath-col-type">
+											<span className={ `ath-badge ath-badge-${ hook.type }` }>{ hook.type }</span>
+										</td>
+										<td className="ath-col-source">
+											<span className={ `ath-badge ath-badge-${ hook.is_core === 'yes' ? 'core' : 'custom' }` }>
+												{ hook.is_core === 'yes' ? __( 'Core', 'all-the-hooks' ) : __( 'Custom', 'all-the-hooks' ) }
+											</span>
+										</td>
+										<td className="ath-col-file">
+											<code className="ath-file-path">
+												{ hook.file }:{ hook.line_number }
+											</code>
+										</td>
+										<td className="ath-col-listeners">
+											<span className={ `ath-badge ${ hook.listeners?.length > 0 ? 'ath-badge-success' : '' }` }>
+												{ hook.listeners?.length || 0 }
+											</span>
+										</td>
+									</tr>
+								) ) }
+							</tbody>
+						</table>
+					</div>
+				</CardBody>
+			</Card>
 		</div>
 	);
 }
