@@ -41,21 +41,72 @@ This utility was created to simplify that process, providing a quick and straigh
 ## Installation
 
 1. Clone this repository to your WordPress plugins directory:
-   ```
+   ```bash
    cd wp-content/plugins
    git clone https://github.com/laxmariappan/all-the-hooks.git
    ```
 
-2. Install dependencies using Composer:
-   ```
+2. Install PHP dependencies using Composer:
+   ```bash
    cd all-the-hooks
    composer install
    ```
 
-3. Activate the plugin in the WordPress admin or using WP-CLI:
+3. Install JavaScript dependencies and build the admin interface:
+   ```bash
+   npm install
+   npm run build
    ```
+
+4. Activate the plugin in the WordPress admin or using WP-CLI:
+   ```bash
    wp plugin activate all-the-hooks
    ```
+
+## Development
+
+### Building the React Admin Interface
+
+The plugin uses React with WordPress's DataViews components for the admin interface.
+
+**Development mode (with hot reload):**
+```bash
+npm start
+```
+
+**Production build:**
+```bash
+npm run build
+```
+
+**Code formatting:**
+```bash
+npm run format
+```
+
+**Linting:**
+```bash
+npm run lint:js
+```
+
+### File Structure
+```
+all-the-hooks/
+├── src/admin/              # React admin interface source
+│   ├── App.js             # Main app component
+│   ├── components/        # React components
+│   │   ├── ScanForm.js   # Scan configuration form (DataForm)
+│   │   └── ResultsView.js # Results table (DataViews)
+│   ├── index.js          # Entry point
+│   └── style.css         # Admin styles
+├── includes/              # PHP classes
+│   ├── class-admin-interface.php
+│   ├── class-hook-scanner.php
+│   ├── class-hook-visitor.php
+│   └── class-output-formatter.php
+├── build/                 # Built assets (generated)
+└── vendor/                # Composer dependencies
+```
 
 ## Usage
 
