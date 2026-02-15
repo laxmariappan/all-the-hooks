@@ -1,0 +1,22 @@
+{
+  "name": "all-the-hooks",
+  "version": "1.1.0",
+  "description": "WordPress plugin to discover and document hooks",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "format": "wp-scripts format",
+    "lint:js": "wp-scripts lint-js"
+  },
+  "dependencies": {
+    "@wordpress/api-fetch": "^7.9.0",
+    "@wordpress/components": "^28.9.0",
+    "@wordpress/dataviews": "^4.6.0",
+    "@wordpress/element": "^6.9.0",
+    "@wordpress/i18n": "^5.9.0",
+    "@wordpress/notices": "^5.9.0"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^30.6.0"
+  }
+}

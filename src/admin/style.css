@@ -1,0 +1,223 @@
+/**
+ * All The Hooks Admin Styles
+ * Full-width layout using WordPress DataViews
+ */
+
+.ath-admin-app {
+	max-width: 100%;
+	width: 100%;
+	margin: 0 auto;
+	padding: 0;
+}
+
+.ath-admin-header {
+	margin-bottom: 30px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ath-admin-header h1 {
+	margin: 0 0 10px 0;
+	font-size: 28px;
+	line-height: 1.2;
+}
+
+.ath-admin-header .description {
+	margin: 0;
+	font-size: 14px;
+	color: #646970;
+}
+
+/* Scan Form */
+.ath-scan-form {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 24px;
+	margin-bottom: 30px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ath-form-actions {
+	margin-top: 24px;
+	padding-top: 16px;
+	border-top: 1px solid #dcdcde;
+}
+
+/* Progress Bar */
+.ath-progress {
+	margin-top: 20px;
+	padding: 16px;
+	background: #f0f0f1;
+	border-radius: 4px;
+}
+
+.ath-progress-bar {
+	width: 100%;
+	height: 24px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 12px;
+	overflow: hidden;
+	margin-bottom: 10px;
+}
+
+.ath-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #2271b1 0%, #135e96 100%);
+	transition: width 0.3s ease;
+	border-radius: 12px;
+}
+
+.ath-progress-text {
+	margin: 0;
+	text-align: center;
+	font-size: 13px;
+	color: #1d2327;
+	font-weight: 500;
+}
+
+/* Results View */
+.ath-results-view {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 24px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.ath-results-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 24px;
+	flex-wrap: wrap;
+	gap: 20px;
+}
+
+.ath-results-header h2 {
+	margin: 0;
+	font-size: 20px;
+	flex: 1 1 100%;
+}
+
+/* Summary Stats */
+.ath-summary-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	gap: 16px;
+	flex: 1;
+}
+
+.ath-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 12px;
+	background: #f0f0f1;
+	border-radius: 4px;
+	border-left: 3px solid #2271b1;
+}
+
+.ath-stat-number {
+	font-size: 28px;
+	font-weight: 700;
+	color: #2271b1;
+	line-height: 1;
+	margin-bottom: 6px;
+}
+
+.ath-stat-label {
+	font-size: 11px;
+	color: #646970;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	text-align: center;
+}
+
+/* Badges */
+.ath-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	background: #f0f0f1;
+	color: #1d2327;
+	white-space: nowrap;
+}
+
+.ath-badge-action {
+	background: #d63638;
+	color: #fff;
+}
+
+.ath-badge-filter {
+	background: #2271b1;
+	color: #fff;
+}
+
+.ath-badge-core {
+	background: #00a32a;
+	color: #fff;
+}
+
+.ath-badge-custom {
+	background: #dba617;
+	color: #1d2327;
+}
+
+.ath-badge-success {
+	background: #00a32a;
+	color: #fff;
+}
+
+/* File Path */
+.ath-file-path {
+	font-size: 11px;
+	background: #f0f0f1;
+	padding: 3px 8px;
+	border-radius: 3px;
+	font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 400px;
+	display: inline-block;
+}
+
+/* DataViews overrides for full width */
+.dataviews-wrapper {
+	width: 100%;
+}
+
+.dataviews-view-table {
+	width: 100%;
+}
+
+.dataviews-view-table table {
+	width: 100%;
+	table-layout: auto;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+	.ath-results-header {
+		flex-direction: column;
+	}
+
+	.ath-summary-stats {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.ath-file-path {
+		max-width: 200px;
+	}
+}
+
+@media screen and (max-width: 480px) {
+	.ath-summary-stats {
+		grid-template-columns: 1fr;
+	}
+}
